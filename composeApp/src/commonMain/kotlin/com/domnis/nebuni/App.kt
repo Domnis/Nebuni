@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +46,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.network.ScienceAPI
+import com.domnis.nebuni.ui.theme.NebuniTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -62,7 +64,7 @@ data class Detail(val key: String)
 @Composable
 @Preview
 fun App() {
-    MaterialExpressiveTheme  {
+    NebuniTheme {
         val scope = rememberCoroutineScope()
         var isLoadingMissions by remember { mutableStateOf(false) }
 
@@ -153,7 +155,7 @@ fun App() {
                                 }
                             }
 
-                            item { Spacer(Modifier.height(48.dp)) }
+                            item { Spacer(Modifier.height(64.dp)) }
                         }
 
                         AnimatedVisibility(
@@ -183,7 +185,9 @@ fun App() {
                                     }
                                 }
                             },
-                            modifier = Modifier.align(Alignment.BottomCenter),
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .systemBarsPadding(),
                             enabled = !isLoadingMissions
                         ) {
                             Text("Fetch science missions")
@@ -194,8 +198,8 @@ fun App() {
                     val detail: Detail = backStackEntry.toRoute()
                     Column(
                         modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .fillMaxSize(),
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp),
                         horizontalAlignment = Alignment.Start,
                     ) {
                         Text("Selected mission is: ", maxLines = 1)
