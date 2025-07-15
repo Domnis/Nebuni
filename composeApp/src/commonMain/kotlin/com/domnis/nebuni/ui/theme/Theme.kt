@@ -242,60 +242,6 @@ private val highContrastDarkColorScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
 )
 
-val extendedLight = ExtendedColorScheme(
-    customColor1 = ColorFamily(
-        customColor1Light,
-        onCustomColor1Light,
-        customColor1ContainerLight,
-        onCustomColor1ContainerLight,
-    ),
-)
-
-val extendedDark = ExtendedColorScheme(
-    customColor1 = ColorFamily(
-        customColor1Dark,
-        onCustomColor1Dark,
-        customColor1ContainerDark,
-        onCustomColor1ContainerDark,
-    ),
-)
-
-val extendedLightMediumContrast = ExtendedColorScheme(
-    customColor1 = ColorFamily(
-        customColor1LightMediumContrast,
-        onCustomColor1LightMediumContrast,
-        customColor1ContainerLightMediumContrast,
-        onCustomColor1ContainerLightMediumContrast,
-    ),
-)
-
-val extendedLightHighContrast = ExtendedColorScheme(
-    customColor1 = ColorFamily(
-        customColor1LightHighContrast,
-        onCustomColor1LightHighContrast,
-        customColor1ContainerLightHighContrast,
-        onCustomColor1ContainerLightHighContrast,
-    ),
-)
-
-val extendedDarkMediumContrast = ExtendedColorScheme(
-    customColor1 = ColorFamily(
-        customColor1DarkMediumContrast,
-        onCustomColor1DarkMediumContrast,
-        customColor1ContainerDarkMediumContrast,
-        onCustomColor1ContainerDarkMediumContrast,
-    ),
-)
-
-val extendedDarkHighContrast = ExtendedColorScheme(
-    customColor1 = ColorFamily(
-        customColor1DarkHighContrast,
-        onCustomColor1DarkHighContrast,
-        customColor1ContainerDarkHighContrast,
-        onCustomColor1ContainerDarkHighContrast,
-    ),
-)
-
 @Immutable
 data class ColorFamily(
     val color: Color,
@@ -332,4 +278,3 @@ fun NebuniTheme(
         content = content
     )
 }
-
