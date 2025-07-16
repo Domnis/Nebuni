@@ -43,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -217,6 +218,30 @@ fun MainPage(appState: AppState = koinInject()) {
                 ) {
                     Text("Selected mission is: ", maxLines = 1)
                     Text(detail.key, maxLines = 1)
+
+                    val scienceMission = scienceMissionMap[detail.key]
+                    var deepLink: String = ""
+                    when (scienceMission) {
+                        is ScienceMission.Occultation -> deepLink = scienceMission.data.deeplink
+                        is ScienceMission.Comet -> deepLink = scienceMission.data.deeplink
+                        is ScienceMission.Defense -> deepLink = scienceMission.data.deeplink
+                        is ScienceMission.Transit -> deepLink = scienceMission.data.deeplink
+                        else -> deepLink = ""
+                    }
+
+                    if (deepLink.isNotEmpty()) {
+                        val uriHandler = LocalUriHandler.current
+
+                        Button(
+                            onClick = {
+                                uriHandler.openUri(deepLink)
+                            },
+                            modifier = Modifier
+                                .systemBarsPadding()
+                        ) {
+                            Text("Open mission in Unistellar app")
+                        }
+                    }
                 }
             }
         }

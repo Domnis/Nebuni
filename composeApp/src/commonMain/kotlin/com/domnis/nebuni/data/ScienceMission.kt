@@ -6,7 +6,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
-import kotlin.collections.forEach
 
 @Serializable
 sealed class ScienceMission {
@@ -53,19 +52,22 @@ data class OccultationData(
 @Serializable
 data class CometData(
     val pipeline_type: String,
-    val target_name: String
+    val target_name: String,
+    val deeplink: String
 )
 
 @Serializable
 data class DefenseData(
     val pipeline_type: String,
-    val target_name: String
+    val target_name: String,
+    val deeplink: String
 )
 
 @Serializable
 data class TransitData(
     val pipeline_type: String,
-    val target_name: String
+    val target_name: String,
+    val deeplink: String
 )
 
 class SimpleScienceMissionJsonParser {
