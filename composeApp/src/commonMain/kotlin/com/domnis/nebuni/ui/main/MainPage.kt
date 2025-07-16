@@ -49,12 +49,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.network.ScienceAPI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 
 @Serializable
 object List
@@ -65,8 +67,10 @@ data class Detail(val key: String)
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun MainPage() {
+fun MainPage(appState: AppState = koinInject()) {
     val scope = rememberCoroutineScope()
+    val currentObservationPlace by appState.currentObservationPlace
+
     var isLoadingMissions by remember { mutableStateOf(false) }
 
     var scienceMissionMap by remember { mutableStateOf(emptyMap<String, ScienceMission>()) }
@@ -78,7 +82,7 @@ fun MainPage() {
     fun refreshScienceMissions() {
         isLoadingMissions = true
         scope.launch(Dispatchers.Default) {
-            val apiResult = ScienceAPI().listScienceMissions()
+            val apiResult = ScienceAPI().listScienceMissions(currentObservationPlace)
 
             launch(Dispatchers.Main) {
                 isLoadingMissions = false

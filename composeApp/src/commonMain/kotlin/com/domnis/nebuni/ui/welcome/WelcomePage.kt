@@ -1,9 +1,17 @@
 package com.domnis.nebuni.ui.welcome
 
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -12,10 +20,12 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.Screen
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -25,46 +35,91 @@ import org.koin.compose.koinInject
 @Composable
 @Preview
 fun WelcomePage(appState: AppState = koinInject()) {
-    val latState = rememberTextFieldState()
-    val lonState = rememberTextFieldState()
+    val currentObservationPlace by appState.currentObservationPlace
 
-    Column(
-        modifier = Modifier.fillMaxSize().safeContentPadding(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    val latState = rememberTextFieldState(initialText = currentObservationPlace.latitude.toString())
+    val lonState = rememberTextFieldState(initialText = currentObservationPlace.longitude.toString())
+
+    Box(
+        modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
-        Text("Welcome to Nebuni!")
-        Text("Let's start with a first configuration!")
-        Text("We need to get your GPS coordinate to configure the app. No worry, those information will only be used when you'll ask a refresh of the data.")
+        Column(
+            modifier = Modifier.fillMaxSize().scrollable(
+                rememberScrollState(0),
+                orientation = Orientation.Vertical
+            ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
 
-        OutlinedTextField(
-            state = latState,
-            label = {
-                Text("Latitude")
-            },
-            lineLimits = TextFieldLineLimits.SingleLine,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            )
-        )
+            Spacer(modifier = Modifier.height(64.dp))
 
-        OutlinedTextField(
-            state = lonState,
-            label = {
-                Text("Longitude")
-            },
-            lineLimits = TextFieldLineLimits.SingleLine,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            )
-        )
+            Column(
+                modifier = Modifier.systemBarsPadding(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Welcome to Nebuni!")
+                Text("Let's start with a first configuration!")
+                Text("We need to get your GPS coordinate to configure the app. No worry, those information will only be used when you'll ask a refresh of the data.")
+            }
+
+            Spacer(modifier = Modifier.heightIn(min = 64.dp, max = 256.dp))
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                OutlinedTextField(
+                    state = latState,
+                    label = {
+                        Text("Latitude")
+                    },
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                OutlinedTextField(
+                    state = lonState,
+                    label = {
+                        Text("Longitude")
+                    },
+                    lineLimits = TextFieldLineLimits.SingleLine,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    )
+                )
+            }
+        }
 
         Button(
             onClick = {
+                val latText = latState.text.toString().trim().replace(",", ".")
+                val lonText = lonState.text.toString().trim().replace(",", ".")
+
+                if (latText.isEmpty() || latText.toDoubleOrNull() == null) {
+                    //TODO: show error
+                    return@Button
+                }
+
+                if (lonText.isEmpty() || lonText.toDoubleOrNull() == null) {
+                    //TODO: show error
+                    return@Button
+                }
+
+                appState.updateObservationPlace(
+                    currentObservationPlace.copy(
+                        latitude = latText.toDouble(),
+                        longitude = lonText.toDouble()
+                    )
+                )
+
                 appState.navigateTo(Screen.Main)
-            }
+            },
+            modifier = Modifier.align(Alignment.BottomCenter).systemBarsPadding().height(64.dp)
         ) {
             Text("Validate")
         }
