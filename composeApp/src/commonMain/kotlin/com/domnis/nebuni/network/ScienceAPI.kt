@@ -36,8 +36,8 @@ class ScienceAPI {
                     append("lat", "${observationPlace.latitude}")
                     append("long", "${observationPlace.longitude}")
                     append("tend", "2025-07-22T14:16") // end date for fetch?
-                    append("alt", "0,90") // Full Alt possibles
-                    append("az", "0,360") // Full Az possibles
+                    append("alt", "${observationPlace.altMin},${observationPlace.altMax}") // Full Alt possibles
+                    append("az", "${observationPlace.azMin},${observationPlace.azMax}") // Full Az possibles
                 }
         )
 
