@@ -16,10 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.domnis.nebuni
+package com.domnis.nebuni.ui.theme
 
-interface Platform {
-    val name: String
+import androidx.compose.material3.ColorScheme
+import androidx.compose.runtime.Composable
+
+@Composable
+actual fun dynamicColorScheme(darkTheme: Boolean): ColorScheme {
+    return if (darkTheme) {
+        darkScheme
+    } else {
+        lightScheme
+    }
 }
-
-expect fun getPlatform(): Platform
