@@ -27,13 +27,13 @@ Also, Lepus is a small constellation, associated to Orion and his dogs (for stor
 # Roadmap
 Here are some elements to be added inside the app to have a good experience with the main feature currently focused.
 
-[x] Call and fetch Unistellar's science API
-[x] Add input to define GPS coordinates (and use them to make API calls)
-[x] Open Unistellar's app by using providing deeplink
-[] Save those information for next app use
-[] Save API result locally for offline use
-[] Add screen to configure Altitude and Azimuth range
-[] Add option to filter mission by type
+- [x] Call and fetch Unistellar's science API
+- [x] Add input to define GPS coordinates (and use them to make API calls) 
+- [x] Open Unistellar's app by using providing deeplink
+- [ ] Save those information for next app use
+- [ ] Save API result locally for offline use
+- [ ] Add screen to configure Altitude and Azimuth range
+- [ ] Add option to filter mission by type
 
 # License
 Copyright (C) 2025 Sylvain
