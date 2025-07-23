@@ -71,21 +71,62 @@ data class OccultationData(
 data class CometData(
     val pipeline_type: String,
     val target_name: String,
-    val deeplink: String
+    val deeplink: String,
+    val tstart: String,
+    val tend: String,
+    val priority: Boolean,
+    val ephemeris_url: String,
+    val ephemeris_args: EphemerisArgs
 )
 
 @Serializable
 data class DefenseData(
     val pipeline_type: String,
     val target_name: String,
-    val deeplink: String
+    val deeplink: String,
+    val target_number: String,
+    val orbit_type: String,
+    val tstart: String,
+    val tend: String,
+    val priority: Boolean,
+    val ephemeris_url: String,
+    val ephemeris_args: EphemerisArgs
+)
+
+@Serializable
+data class EphemerisArgs(
+    val name: String,
+    val loc: String,
+    val tStart: String,
+    val auto_step: String,
+    val duration: String,
+    val gain: String,
+    val exp_time: String,
+    val is_comet: Boolean = false
 )
 
 @Serializable
 data class TransitData(
     val pipeline_type: String,
     val target_name: String,
-    val deeplink: String
+    val deeplink: String,
+    val ra: String,
+    val dec: String,
+    val ra_hms: String,
+    val dec_dms: String,
+    val alt: Int,
+    val az: Int,
+    val cardinal_direction: String,
+    val constellation: String,
+    val kml_url: String,
+    val duration: String,
+    val et: Int,
+    val gain: Int,
+    val cadence: Int,
+    val priority: Boolean,
+    val tstart: String,
+    val tend: String,
+    val category: String
 )
 
 class SimpleScienceMissionJsonParser {
