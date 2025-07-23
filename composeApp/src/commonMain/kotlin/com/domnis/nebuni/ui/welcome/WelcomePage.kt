@@ -40,6 +40,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -47,13 +48,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.Screen
+import com.domnis.nebuni.database.AppDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 @Preview
-fun WelcomePage(appState: AppState = koinInject()) {
+fun WelcomePage(appState: AppState = koinInject(), database: AppDatabase = koinInject()) {
+    val coroutineScope = rememberCoroutineScope()
+
     val currentObservationPlace by appState.currentObservationPlace
 
     val latState = rememberTextFieldState(initialText = currentObservationPlace.latitude.toString())
@@ -130,12 +136,16 @@ fun WelcomePage(appState: AppState = koinInject()) {
                         return@Button
                     }
 
-                    appState.updateObservationPlace(
-                        currentObservationPlace.copy(
-                            latitude = latText.toDouble(),
-                            longitude = lonText.toDouble()
-                        )
+                    val place = currentObservationPlace.copy(
+                        latitude = latText.toDouble(),
+                        longitude = lonText.toDouble()
                     )
+
+                    coroutineScope.launch(Dispatchers.Default) {
+                        database.getDao().insert(place)
+                    }
+
+                    appState.updateObservationPlace(place)
 
                     appState.navigateTo(Screen.Main)
                 },

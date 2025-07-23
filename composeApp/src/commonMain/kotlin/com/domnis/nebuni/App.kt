@@ -18,31 +18,85 @@
 
 package com.domnis.nebuni
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.ui.main.MainPage
 import com.domnis.nebuni.ui.theme.NebuniTheme
 import com.domnis.nebuni.ui.welcome.WelcomePage
+import kotlinx.coroutines.delay
+import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.nebuni
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.compose.KoinApplication
+import org.koin.compose.KoinMultiplatformApplication
 import org.koin.compose.koinInject
+import org.koin.core.annotation.KoinExperimentalAPI
+import org.koin.dsl.koinConfiguration
 
+@OptIn(KoinExperimentalAPI::class)
 @Composable
 @Preview
 fun App() {
-    KoinApplication(application = {
-        modules(appModule)
+    KoinMultiplatformApplication(config = koinConfiguration {
+        modules(
+            platformModule(),
+            appModule,
+            databaseModule
+        )
     }) {
         NebuniTheme {
             val appState: AppState = koinInject()
+            val database: AppDatabase = koinInject()
+            val places by database.getDao().getAllAsFlow().collectAsState(emptyList())
             val navController = rememberNavController()
+
+            LaunchedEffect(places) {
+                delay(2000)
+
+                if (places.isNotEmpty()) {
+                    appState.updateObservationPlace(places.first())
+                    appState.navigateTo(Screen.Main)
+                } else {
+                    appState.navigateTo(Screen.Welcome)
+                }
+            }
 
             NavHost(
                 navController = navController,
                 startDestination = appState.currentRootScreen.value.toString()
             ) {
+                composable(Screen.Splash.toString()) {
+                    Scaffold {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.nebuni),
+                                contentDescription = "Nebuni's logo",
+                                modifier = Modifier.size(200.dp).clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
+                    }
+                }
                 composable(Screen.Welcome.toString()) {
                     WelcomePage()
                 }

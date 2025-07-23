@@ -16,21 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.domnis.nebuni.data
+package com.domnis.nebuni
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
+import androidx.room.RoomDatabase
+import com.domnis.nebuni.database.AppDatabase
+import com.domnis.nebuni.database.getDatabaseBuilder
+import org.koin.dsl.module
 
-@Entity
-data class ObservationPlace @OptIn(ExperimentalUuidApi::class) constructor(
-    @PrimaryKey val id: String = Uuid.random().toString(),
-    val name: String = "New Place 01",
-    val latitude: Double = 43.284055, // Notre-Dame de la Garde's latitude
-    val longitude: Double = 5.371309, // Notre-Dame de la Garde's longitude
-    val altMin: Int = 0,
-    val altMax: Int = 90,
-    val azMin: Int = 0,
-    val azMax: Int = 360
-)
+actual fun platformModule() = module {
+    single<RoomDatabase.Builder<AppDatabase>> {
+        getDatabaseBuilder()
+    }
+}

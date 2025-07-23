@@ -18,8 +18,16 @@
 
 package com.domnis.nebuni
 
+import com.domnis.nebuni.database.getRoomDatabase
+import org.koin.core.module.Module
 import org.koin.dsl.module
+
+expect fun platformModule(): Module
 
 val appModule = module {
     single { AppState() }
+}
+
+val databaseModule = module {
+    single { getRoomDatabase(get()) }
 }

@@ -16,21 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.domnis.nebuni.data
+package com.domnis.nebuni.database
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import com.domnis.nebuni.data.ObservationPlace
+import kotlinx.coroutines.flow.Flow
 
-@Entity
-data class ObservationPlace @OptIn(ExperimentalUuidApi::class) constructor(
-    @PrimaryKey val id: String = Uuid.random().toString(),
-    val name: String = "New Place 01",
-    val latitude: Double = 43.284055, // Notre-Dame de la Garde's latitude
-    val longitude: Double = 5.371309, // Notre-Dame de la Garde's longitude
-    val altMin: Int = 0,
-    val altMax: Int = 90,
-    val azMin: Int = 0,
-    val azMax: Int = 360
-)
+@Dao
+interface ObservationPlaceDao {
+    @Insert
+    suspend fun insert(item: ObservationPlace)
+
+    @Query("SELECT count(*) FROM ObservationPlace")
+    suspend fun count(): Int
+
+    @Query("SELECT * FROM ObservationPlace")
+    fun getAllAsFlow(): Flow<List<ObservationPlace>>
+}

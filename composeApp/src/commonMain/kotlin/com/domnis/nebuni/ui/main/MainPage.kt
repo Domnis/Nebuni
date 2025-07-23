@@ -45,6 +45,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
@@ -173,6 +174,16 @@ fun MainPage(appState: AppState = koinInject()) {
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        item {
+                            Column {
+                                Text("Position used:", maxLines = 1)
+                                Text("${appState.currentObservationPlace.value.latitude}")
+                                Text("${appState.currentObservationPlace.value.longitude}")
+
+                                HorizontalDivider()
+                            }
+                        }
+
                         items(scienceMissionMap.keys.toList()) { key ->
                             Column(
                                 Modifier.fillMaxWidth()
@@ -232,7 +243,7 @@ fun MainPage(appState: AppState = koinInject()) {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 8.dp),
-                    horizontalAlignment = Alignment.Start,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text("Selected mission is: ", maxLines = 1)
                     Text(detail.key, maxLines = 1)

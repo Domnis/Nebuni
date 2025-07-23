@@ -21,10 +21,10 @@ package com.domnis.nebuni
 import androidx.compose.runtime.mutableStateOf
 import com.domnis.nebuni.data.ObservationPlace
 
-enum class Screen { Welcome, Main }
+enum class Screen { Splash, Welcome, Main }
 
 class AppState {
-    val currentRootScreen = mutableStateOf(Screen.Welcome)
+    val currentRootScreen = mutableStateOf(Screen.Splash)
 
     val currentObservationPlace = mutableStateOf(ObservationPlace())
 

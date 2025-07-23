@@ -1,4 +1,4 @@
-Hi, and welcome to this repo of Nebuni app!
+![Picture of Nebuni](/misc/pictures/nebuni_small.png) Hi, and welcome to this repo of Nebuni app!
 
 # What's Nebuni?
 Nebuni is an open source cross-platform app to use add some features to your Unistellar's telescope.
@@ -30,7 +30,7 @@ Here are some elements to be added inside the app to have a good experience with
 - [x] Call and fetch Unistellar's science API
 - [x] Add input to define GPS coordinates (and use them to make API calls) 
 - [x] Open Unistellar's app by using providing deeplink
-- [ ] Save those information for next app use
+- [x] Save GPS coordinates for next app use
 - [ ] Save API result locally for offline use
 - [ ] Add screen to configure Altitude and Azimuth range
 - [ ] Add option to filter mission by type
