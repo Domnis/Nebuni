@@ -54,7 +54,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 @Preview
 fun WelcomePage(appState: AppState = koinInject(), database: AppDatabase = koinInject()) {

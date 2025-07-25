@@ -29,6 +29,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
+            linkerOpts.add("-lsqlite3")
         }
     }
     
@@ -99,7 +100,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
     }
     packaging {
         resources {
@@ -121,10 +122,15 @@ dependencies {
     debugImplementation(compose.uiTooling)
 
     // KSP support for Room Compiler.
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
-    add("kspIosX64", libs.androidx.room.compiler)
-    add("kspIosArm64", libs.androidx.room.compiler)
+    listOf(
+        "kspAndroid",
+        "kspIosArm64",
+        "kspIosX64",
+        "kspIosSimulatorArm64",
+        "kspDesktop" //"kspDesktop" here because we define jvm target like "jvm("desktop")" in "kotlin{}" part, just above
+    ).forEach {
+        add(it, libs.androidx.room.compiler)
+    }
 }
 
 compose.desktop {

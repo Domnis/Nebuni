@@ -20,13 +20,12 @@ package com.domnis.nebuni
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.window.core.layout.WindowSizeClass
-import androidx.window.core.layout.computeWindowSizeClass
 import com.domnis.nebuni.data.ObservationPlace
 
 enum class Screen { Splash, Welcome, Main }
 
 class AppState {
-    val currentWindowSizeClass = mutableStateOf(WindowSizeClass.Companion.BREAKPOINTS_V1.computeWindowSizeClass(widthDp = 300f, heightDp = 1200f))
+    val currentWindowSizeClass = mutableStateOf(WindowSizeClass.compute(300f, 1200f))
     val currentRootScreen = mutableStateOf(Screen.Splash)
 
     val currentObservationPlace = mutableStateOf(ObservationPlace())
