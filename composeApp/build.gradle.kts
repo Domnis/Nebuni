@@ -52,6 +52,11 @@ kotlin {
             implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(compose.material3AdaptiveNavigationSuite)
+            implementation(libs.compose.material3.adaptive)
+            implementation(libs.compose.material3.adaptive.layout)
+            implementation(libs.compose.material3.adaptive.navigation)
+            implementation(libs.compose.ui.backhandler)
 
             implementation(libs.androidx.navigation)
             implementation(libs.androidx.lifecycle.viewmodel)
@@ -66,6 +71,7 @@ kotlin {
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
 
             implementation(libs.androidx.room.runtime)
             implementation(libs.sqlite.bundled)

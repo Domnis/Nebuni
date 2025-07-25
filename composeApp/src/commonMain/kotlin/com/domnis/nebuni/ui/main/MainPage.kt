@@ -19,13 +19,17 @@
 package com.domnis.nebuni.ui.main
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,50 +37,56 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
-import com.domnis.nebuni.network.ScienceAPI
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.nebuni
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Serializable
 object List
@@ -84,56 +94,46 @@ object List
 @Serializable
 data class Detail(val key: String)
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalSharedTransitionApi::class, ExperimentalMaterial3AdaptiveApi::class,
+    ExperimentalComposeUiApi::class
+)
 @Composable
 @Preview
-fun MainPage(appState: AppState = koinInject()) {
+fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState = koinInject()) {
     val scope = rememberCoroutineScope()
     val currentObservationPlace by appState.currentObservationPlace
 
-    var isLoadingMissions by remember { mutableStateOf(false) }
+    val navigator = rememberListDetailPaneScaffoldNavigator<Nothing>()
 
-    var scienceMissionMap by remember { mutableStateOf(emptyMap<String, ScienceMission>()) }
+    var isLoadingMissions by mainViewModel.isLoadingMissions
+    var isListAndDetailVisible by remember { mutableStateOf(false) }
 
-    val navController = rememberNavController()
-    val bottomSheetState = rememberModalBottomSheetState()
-    val sheetScaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
+    var scienceMissionMap by mainViewModel.scienceMissionMap
+    var selectedMission by mainViewModel.selectedMission
 
-    fun refreshScienceMissions() {
-        isLoadingMissions = true
-        scope.launch(Dispatchers.Default) {
-            val apiResult = ScienceAPI().listScienceMissions(currentObservationPlace)
-
-            launch(Dispatchers.Main) {
-                isLoadingMissions = false
-                scienceMissionMap = apiResult
-            }
+    val onBack = {
+        scope.launch {
+            navigator.navigateBack()
+            mainViewModel.unselectMission()
         }
     }
 
-    LaunchedEffect(null) {
-        refreshScienceMissions()
+    BackHandler(enabled = navigator.canNavigateBack()) {
+        onBack()
     }
 
-    BottomSheetScaffold(
-        sheetContent = {
-            // implements sheets as needed
-        },
-        scaffoldState = sheetScaffoldState,
-        sheetPeekHeight = 0.dp,
+    Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text("Nebuni")
                 },
                 navigationIcon = {
-                    val currentRoute =
-                        navController.currentBackStackEntryAsState().value?.destination?.route
-
-                    if (currentRoute?.contains("detail", ignoreCase = true) == true) {
+                    if (!isListAndDetailVisible && !selectedMission.isNullOrEmpty()) {
                         IconButton(
                             onClick = {
-                                navController.navigateUp()
+                                onBack()
                             }
                         ) {
                             Icon(
@@ -144,26 +144,29 @@ fun MainPage(appState: AppState = koinInject()) {
                     }
                 },
                 actions = {
-                    FilledIconButton(
-                        onClick = {
-                            // navigate to setting
-                        },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = "A settings icon"
-                        )
-                    }
+//                    FilledIconButton(
+//                        onClick = {
+//                            // navigate to setting
+//                        },
+//                    ) {
+//                        Icon(
+//                            imageVector = Icons.Filled.Settings,
+//                            contentDescription = "A settings icon"
+//                        )
+//                    }
                 }
             )
         },
     ) { paddingValues ->
-        NavHost(
-            navController = navController,
-            startDestination = List,
-            modifier = Modifier.padding(paddingValues)
-        ) {
-            composable<List> {
+        ListDetailPaneScaffold(
+            modifier = Modifier.padding(paddingValues),
+            directive = navigator.scaffoldDirective,
+            value = navigator.scaffoldValue,
+            listPane = {
+                isListAndDetailVisible =
+                    navigator.scaffoldValue[ListDetailPaneScaffoldRole.List] == PaneAdaptedValue.Expanded
+                            && navigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Expanded
+
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
@@ -175,10 +178,23 @@ fun MainPage(appState: AppState = koinInject()) {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         item {
-                            Column {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 Text("Position used:", maxLines = 1)
-                                Text("${appState.currentObservationPlace.value.latitude}")
-                                Text("${appState.currentObservationPlace.value.longitude}")
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.LocationOn,
+                                        contentDescription = "A location icon"
+                                    )
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    Text("${appState.currentObservationPlace.value.latitude} / ${appState.currentObservationPlace.value.longitude}")
+                                }
 
                                 HorizontalDivider()
                             }
@@ -187,6 +203,12 @@ fun MainPage(appState: AppState = koinInject()) {
                         items(scienceMissionMap.keys.toList()) { key ->
                             Column(
                                 Modifier.fillMaxWidth()
+                                    .background(
+                                        color = if (selectedMission == key)
+                                            LocalTextSelectionColors.current.backgroundColor
+                                        else Color.Transparent,
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
                                     .border(
                                         1.dp,
                                         color = LocalContentColor.current,
@@ -198,7 +220,11 @@ fun MainPage(appState: AppState = koinInject()) {
                                         indication = null,
                                         onClickLabel = "Get information for science mission named: $key",
                                         onClick = {
-                                            navController.navigate(Detail(key))
+                                            mainViewModel.selectMission(key)
+
+                                            scope.launch {
+                                                navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
+                                            }
                                         }
                                     ),
                             ) {
@@ -226,7 +252,7 @@ fun MainPage(appState: AppState = koinInject()) {
 
                     Button(
                         onClick = {
-                            refreshScienceMissions()
+                            mainViewModel.refreshScienceMissions()
                         },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -236,43 +262,63 @@ fun MainPage(appState: AppState = koinInject()) {
                         Text("Fetch science missions")
                     }
                 }
-            }
-            composable<Detail> { backStackEntry ->
-                val detail: Detail = backStackEntry.toRoute()
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text("Selected mission is: ", maxLines = 1)
-                    Text(detail.key, maxLines = 1)
-
-                    val scienceMission = scienceMissionMap[detail.key]
-                    var deepLink: String = ""
-                    when (scienceMission) {
-                        is ScienceMission.Occultation -> deepLink = scienceMission.data.deeplink
-                        is ScienceMission.Comet -> deepLink = scienceMission.data.deeplink
-                        is ScienceMission.Defense -> deepLink = scienceMission.data.deeplink
-                        is ScienceMission.Transit -> deepLink = scienceMission.data.deeplink
-                        else -> deepLink = ""
-                    }
-
-                    if (deepLink.isNotEmpty()) {
-                        val uriHandler = LocalUriHandler.current
-
-                        Button(
-                            onClick = {
-                                uriHandler.openUri(deepLink)
-                            },
-                            modifier = Modifier
-                                .systemBarsPadding()
+            },
+            detailPane = {
+                if (selectedMission == null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("Open mission in Unistellar app")
+                            Image(
+                                painter = painterResource(Res.drawable.nebuni),
+                                contentDescription = "Nebuni's logo",
+                                modifier = Modifier.size(200.dp).clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                            )
+
+                            Text("No mission is currently selected...\nChoose one on the side menu!")
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        Text("Selected mission is: ", maxLines = 1)
+                        Text(selectedMission ?: "No mission selected", maxLines = 1)
+
+                        val scienceMission = scienceMissionMap[selectedMission]
+                        var deepLink = when (scienceMission) {
+                            is ScienceMission.Occultation -> scienceMission.data.deeplink
+                            is ScienceMission.Comet -> scienceMission.data.deeplink
+                            is ScienceMission.Defense -> scienceMission.data.deeplink
+                            is ScienceMission.Transit -> scienceMission.data.deeplink
+                            else -> ""
+                        }
+
+                        if (deepLink.isNotEmpty()) {
+                            val uriHandler = LocalUriHandler.current
+
+                            Button(
+                                onClick = {
+                                    uriHandler.openUri(deepLink)
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .systemBarsPadding()
+                            ) {
+                                Text("Open mission in Unistellar app")
+                            }
                         }
                     }
                 }
             }
-        }
+        )
     }
 }
