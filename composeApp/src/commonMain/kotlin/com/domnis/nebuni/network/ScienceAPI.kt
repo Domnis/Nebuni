@@ -45,9 +45,10 @@ class ScienceAPI {
     }
 
     suspend fun listScienceMissions(observationPlace: ObservationPlace): Map<String, ScienceMission> {
-        val response = httpClient.submitForm(
-            "https://science.unistellar.com/wp-admin/admin-ajax.php",
-            formParameters = parameters {
+        val response = try {
+            httpClient.submitForm(
+                "https://science.unistellar.com/wp-admin/admin-ajax.php",
+                formParameters = parameters {
                     append("action", "get-science-events")
                     append("date", "2025-07-10T14:16") // start date?
                     append("pipeline", "o,e,c,p") // type of science events => o = occultation, c = comet, e = exoplanet, p = planetary defense
@@ -57,9 +58,13 @@ class ScienceAPI {
                     append("alt", "${observationPlace.altMin},${observationPlace.altMax}") // Full Alt possibles
                     append("az", "${observationPlace.azMin},${observationPlace.azMax}") // Full Az possibles
                 }
-        )
+            )
+        } catch(e: Exception) {
+            e.printStackTrace()
+            null
+        }
 
-        if (response.status != HttpStatusCode.OK) {
+        if (response == null || response.status != HttpStatusCode.OK) {
             return emptyMap()
         }
 

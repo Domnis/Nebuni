@@ -22,7 +22,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,7 +39,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material.icons.Icons
@@ -72,18 +70,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
-import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.ui.missions.EmptyMissionPage
+import com.domnis.nebuni.ui.missions.MissionPage
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import nebuni.composeapp.generated.resources.Res
-import nebuni.composeapp.generated.resources.nebuni
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -127,7 +120,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text("Nebuni")
+                    Text(if (!isListAndDetailVisible && !selectedMission.isNullOrEmpty()) selectedMission!! else "Nebuni")
                 },
                 navigationIcon = {
                     if (!isListAndDetailVisible && !selectedMission.isNullOrEmpty()) {
@@ -265,56 +258,14 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
             },
             detailPane = {
                 if (selectedMission == null) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Image(
-                                painter = painterResource(Res.drawable.nebuni),
-                                contentDescription = "Nebuni's logo",
-                                modifier = Modifier.size(200.dp).clip(CircleShape),
-                                contentScale = ContentScale.Crop,
-                            )
-
-                            Text("No mission is currently selected...\nChoose one on the side menu!")
-                        }
-                    }
+                    EmptyMissionPage()
                 } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 8.dp),
-                        horizontalAlignment = Alignment.Start,
-                    ) {
-                        Text("Selected mission is: ", maxLines = 1)
-                        Text(selectedMission ?: "No mission selected", maxLines = 1)
-
-                        val scienceMission = scienceMissionMap[selectedMission]
-                        var deepLink = when (scienceMission) {
-                            is ScienceMission.Occultation -> scienceMission.data.deeplink
-                            is ScienceMission.Comet -> scienceMission.data.deeplink
-                            is ScienceMission.Defense -> scienceMission.data.deeplink
-                            is ScienceMission.Transit -> scienceMission.data.deeplink
-                            else -> ""
-                        }
-
-                        if (deepLink.isNotEmpty()) {
-                            val uriHandler = LocalUriHandler.current
-
-                            Button(
-                                onClick = {
-                                    uriHandler.openUri(deepLink)
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .systemBarsPadding()
-                            ) {
-                                Text("Open mission in Unistellar app")
-                            }
+                    selectedMission?.let { missionKey ->
+                        scienceMissionMap[missionKey]?.let { mission ->
+                            MissionPage(
+                                missionKey,
+                                mission
+                            )
                         }
                     }
                 }
