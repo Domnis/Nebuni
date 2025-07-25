@@ -46,8 +46,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
+import com.domnis.nebuni.data.CometData
+import com.domnis.nebuni.data.DefenseData
 import com.domnis.nebuni.data.OccultationData
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.data.TransitData
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.nebuni
 import org.jetbrains.compose.resources.painterResource
@@ -69,8 +72,13 @@ fun MissionPage(
             ),
         horizontalAlignment = Alignment.Start,
     ) {
-        if (mission is ScienceMission.Occultation) {
-            OccultationMissionPage(mission.data)
+
+        when (mission) {
+            is ScienceMission.Occultation -> OccultationMissionPage(mission.data)
+            is ScienceMission.Comet -> CometMissionPage(mission.data)
+            is ScienceMission.Defense -> DefenseMissionPage(mission.data)
+            is ScienceMission.Transit -> TransitMissionPage(mission.data)
+            else -> Spacer(modifier = Modifier.height(12.dp))
         }
 
         val deepLink = when (mission) {
@@ -102,6 +110,12 @@ fun MissionPage(
                     )
                 }
             }
+        } else {
+            Column(
+                modifier = Modifier.systemBarsPadding()
+            ) {
+                Text("Deeplink is not available for this kind of mission...")
+            }
         }
     }
 }
@@ -109,6 +123,95 @@ fun MissionPage(
 @Composable
 fun OccultationMissionPage(
     data: OccultationData
+) {
+    Column(
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Target: ${data.target_name}")
+
+        HorizontalDivider()
+
+        Column {
+            Text("Date and duration:")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("From: ${data.tstart}")
+            Text("To: ${data.tend}")
+            Text("Duration: ${data.duration}")
+        }
+
+        HorizontalDivider()
+
+        Column {
+            Text("Position:")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("RA: ${data.ra_hms} (${data.ra})")
+            Text("Dec: ${data.dec_dms} (${data.dec})")
+            Text("Alt/Az: ${data.alt} / ${data.az} (${data.cardinal_direction})")
+            Text("Constellation: ${data.constellation}")
+        }
+
+        HorizontalDivider()
+    }
+}
+
+@Composable
+fun CometMissionPage(
+    data: CometData
+) {
+    Column(
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Target: ${data.target_name}")
+
+        HorizontalDivider()
+
+        Column {
+            Text("Date and duration:")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("From: ${data.tstart}")
+            Text("To: ${data.tend}")
+        }
+
+        HorizontalDivider()
+    }
+}
+
+@Composable
+fun DefenseMissionPage(
+    data: DefenseData
+) {
+    Column(
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Target: ${data.target_name}")
+
+        HorizontalDivider()
+
+        Column {
+            Text("Date and duration:")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("From: ${data.tstart}")
+            Text("To: ${data.tend}")
+        }
+
+        HorizontalDivider()
+    }
+}
+
+@Composable
+fun TransitMissionPage(
+    data: TransitData
 ) {
     Column(
         horizontalAlignment = Alignment.Start,

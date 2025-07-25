@@ -71,7 +71,7 @@ data class OccultationData(
 data class CometData(
     val pipeline_type: String,
     val target_name: String,
-    val deeplink: String,
+    val deeplink: String = "", //in fact, does not exist here...
     val tstart: String,
     val tend: String,
     val priority: Boolean,
@@ -83,7 +83,7 @@ data class CometData(
 data class DefenseData(
     val pipeline_type: String,
     val target_name: String,
-    val deeplink: String,
+    val deeplink: String = "", //in fact, does not exist here...
     val target_number: String,
     val orbit_type: String,
     val tstart: String,
@@ -97,12 +97,12 @@ data class DefenseData(
 data class EphemerisArgs(
     val name: String,
     val loc: String,
-    val tStart: String,
+    val tstart: String,
     val auto_step: String,
     val duration: String,
     val gain: String,
     val exp_time: String,
-    val is_comet: Boolean = false
+    val is_comet: String? = "false"
 )
 
 @Serializable
@@ -171,6 +171,7 @@ class SimpleScienceMissionJsonParser {
                 }
             }
         } catch (e: SerializationException) {
+            e.printStackTrace()
             // If parsing fails, store as unknown
             ScienceMission.Unknown(jsonObject.toString())
         }
