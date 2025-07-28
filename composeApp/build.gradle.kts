@@ -141,6 +141,17 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.domnis.nebuni"
             packageVersion = "1.0.0"
+
+            macOS {
+                dockName = "Nebuni"
+                iconFile.set(project.file("app_icon/macos/nebuni.icns"))
+            }
+            windows {
+                iconFile.set(project.file("app_icon/windows/nebuni.ico"))
+            }
+            linux {
+                iconFile.set(project.file("app_icon/linux/nebuni.png"))
+            }
         }
     }
 }
