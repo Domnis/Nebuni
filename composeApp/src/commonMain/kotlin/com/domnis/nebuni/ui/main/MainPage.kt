@@ -43,6 +43,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -104,6 +105,9 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
 
     var scienceMissionMap by mainViewModel.scienceMissionMap
     var selectedMission by mainViewModel.selectedMission
+
+    var startDateTime by mainViewModel.startTime
+    var endDateTime by mainViewModel.endTime
 
     val onBack = {
         scope.launch {
@@ -174,8 +178,6 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text("Position used:", maxLines = 1)
-
                                 Row(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -187,6 +189,19 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     Spacer(modifier = Modifier.width(8.dp))
 
                                     Text("${appState.currentObservationPlace.value.latitude} / ${appState.currentObservationPlace.value.longitude}")
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.DateRange,
+                                        contentDescription = "A date range icon"
+                                    )
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    Text("${startDateTime.replace('T', ' ')} -> ${endDateTime.replace('T', ' ')} (UTC)")
                                 }
 
                                 HorizontalDivider()

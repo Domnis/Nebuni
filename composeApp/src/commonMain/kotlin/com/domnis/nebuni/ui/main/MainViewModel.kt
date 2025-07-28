@@ -23,6 +23,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.getCurrentDateAndTime
+import com.domnis.nebuni.getCurrentDateAndTimeWithOffset
 import com.domnis.nebuni.network.ScienceAPI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,6 +34,9 @@ class MainViewModel(var appState: AppState): ViewModel() {
     var scienceMissionMap = mutableStateOf(emptyMap<String, ScienceMission>())
     var selectedMission = mutableStateOf<String?>(null)
 
+    var startTime = mutableStateOf(getCurrentDateAndTime())
+    var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
+
     init {
         refreshScienceMissions()
     }
@@ -39,7 +44,11 @@ class MainViewModel(var appState: AppState): ViewModel() {
     fun refreshScienceMissions() {
         isLoadingMissions.value = true
         viewModelScope.launch(Dispatchers.Default) {
-            val apiResult = ScienceAPI().listScienceMissions(appState.currentObservationPlace.value)
+            val apiResult = ScienceAPI().listScienceMissions(
+                observationPlace = appState.currentObservationPlace.value,
+                startDateTime = startTime.value,
+                endDateTime = endTime.value
+            )
 
             launch(Dispatchers.Main) {
                 isLoadingMissions.value = false
