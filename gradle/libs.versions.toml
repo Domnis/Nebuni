@@ -5,6 +5,7 @@ android-minSdk = "24"
 android-targetSdk = "35"
 androidx-activity = "1.10.1"
 androidx-navigation = "2.9.0-beta03"
+androix-window = "1.4.0-alpha09"
 androidx-room = "2.8.0-alpha01"
 androidx-core = "1.16.0"
 androidx-espresso = "3.6.1"
@@ -35,6 +36,7 @@ androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-room" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-room" }
 androidx-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
+androidx-window-core = { module = "org.jetbrains.androidx.window:window-core", version.ref = "androix-window" }
 compose-material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "composeMaterial3" }
 compose-material3-adaptive-layout = { module = "org.jetbrains.compose.material3.adaptive:adaptive-layout", version.ref = "composeMaterial3" }
 compose-material3-adaptive-navigation = { module = "org.jetbrains.compose.material3.adaptive:adaptive-navigation", version.ref = "composeMaterial3" }

@@ -19,8 +19,6 @@
 package com.domnis.nebuni.ui.missions
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +31,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
@@ -66,10 +65,7 @@ fun MissionPage(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 8.dp)
-            .scrollable(
-                rememberScrollState(),
-                orientation = Orientation.Vertical
-            ),
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.Start,
     ) {
 

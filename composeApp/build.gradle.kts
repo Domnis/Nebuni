@@ -59,6 +59,7 @@ kotlin {
             implementation(libs.compose.material3.adaptive.navigation)
             implementation(libs.compose.ui.backhandler)
 
+            implementation(libs.androidx.window.core)
             implementation(libs.androidx.navigation)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtimeCompose)
@@ -101,7 +102,7 @@ android {
         applicationId = "com.domnis.nebuni"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 2
+        versionCode = 3
         versionName = "1.0.0"
     }
     packaging {

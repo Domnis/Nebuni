@@ -18,9 +18,7 @@
 
 package com.domnis.nebuni
 
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -49,10 +47,10 @@ fun App() {
             val appState: AppState = koinInject()
             val navController = rememberNavController()
 
-            val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-            LaunchedEffect(windowSizeClass) {
-                appState.setWindowSizeClass(windowSizeClass)
-            }
+//            val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+//            LaunchedEffect(windowSizeClass) {
+//                appState.setWindowSizeClass(windowSizeClass)
+//            }
 
             NavHost(
                 navController = navController,
