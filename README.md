@@ -1,7 +1,8 @@
-![Picture of Nebuni](/misc/pictures/nebuni_small.png) Hi, and welcome to this repo of Nebuni app!
+![Picture of Nebuni](/misc/pictures/nebuni_small.png) 
+Hi, and welcome to this repo of Nebuni app!
 
 # What's Nebuni?
-Nebuni is an open source cross-platform app to use add some features to your Unistellar's telescope.
+Nebuni is an open source cross-platform app helping to use your Unistellar's telescope.
 
 The first feature will be to fetch science missions, storing them locally for offline use and with an option to open official Unistellar's app science page, like if using the science website.
 
@@ -10,7 +11,7 @@ I'm a user of Unistellar's telescope and one thing I missed to do more science i
 
 I also want to try Kotlin and Compose multiplatform development framework for mobile app.
 
-So I join both and start working on Nebuni!
+So I joined both and start working on Nebuni!
 
 # No, I mean... WHY Nebuni? Why this name?
 Oh... I see. In fact, as a side project, I don't really think about a name of product, or something. But be real, "Unistellar's science mission fetching app" is a bit long, difficult to remind and limited in terms of future development, right?
@@ -23,6 +24,11 @@ Nebula could be a good starting point to link to "Unistellar", or, more globally
 And, in shorter way... Nebuni make me think about... a bunny 🐰! (So, in same time, I got a name AND a logo, pretty cool, right? 😎)
 
 Also, Lepus is a small constellation, associated to Orion and his dogs (for story), but fainter than them... Like Nebuni, a smaller app than Unistellar's one (or any other company if some feature could be compatible to all of them)
+
+# Release
+Nebuni will be released on Apple's App Store and Google Play Store when the real v1 will be reach.
+
+Since that, a beta testing program will be lunch as soon as possible so it will be easy for all to test the app!
 
 # Roadmap
 Here are some elements to be added inside the app to have a good experience with the main feature currently focused.
