@@ -1,4 +1,5 @@
-![Picture of Nebuni](/misc/pictures/nebuni_small.png) 
+![Nebuni's app icon](/misc/pictures/nebuni_app_icon_small.png) 
+
 Hi, and welcome to this repo of Nebuni app!
 
 # What's Nebuni?
@@ -39,7 +40,7 @@ Here are some elements to be added inside the app to have a good experience with
 - [x] Save GPS coordinates for next app use
 - [ ] Save API result locally for offline use
 - [ ] Add screen to configure Altitude and Azimuth range
-- [ ] Add option to filter mission by type
+- [ ] Add option to filter and group missions (by type, start date,...)
 
 # License
 Copyright (C) 2025 Sylvain

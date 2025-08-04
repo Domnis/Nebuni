@@ -32,7 +32,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import nebuni.composeapp.generated.resources.Res
-import nebuni.composeapp.generated.resources.nebuni
+import nebuni.composeapp.generated.resources.nebuni_app_icon
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
@@ -47,7 +47,7 @@ fun SplashView(viewModel: SplashViewModel = koinViewModel(), appState: AppState 
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(Res.drawable.nebuni),
+                painter = painterResource(Res.drawable.nebuni_app_icon),
                 contentDescription = "Nebuni's logo",
                 modifier = Modifier.size(200.dp).clip(CircleShape),
                 contentScale = ContentScale.Crop,
