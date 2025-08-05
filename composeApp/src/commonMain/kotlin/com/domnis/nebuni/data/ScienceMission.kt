@@ -18,6 +18,12 @@
 
 package com.domnis.nebuni.data
 
+import com.domnis.nebuni.customDisplayDateTimeFormat
+import com.domnis.nebuni.customInstantParseFormat
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -65,7 +71,19 @@ data class OccultationData(
     val priority: Boolean,
     val tstart: String,
     val tend: String
-)
+) {
+    fun getStartDateTimeInLocalTimeZone(): String {
+        return Instant.parse(tstart, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+
+    fun getEndDateTimeInLocalTimeZone(): String {
+        return Instant.parse(tend, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+}
 
 @Serializable
 data class CometData(
@@ -77,7 +95,9 @@ data class CometData(
     val priority: Boolean,
     val ephemeris_url: String,
     val ephemeris_args: EphemerisArgs
-)
+) // no parsing for comet as format is a bit different there.
+// Seems like tstart and tend are in year-month-day format
+// and define a range of multiple month of visibility.
 
 @Serializable
 data class DefenseData(
@@ -91,7 +111,19 @@ data class DefenseData(
     val priority: Boolean,
     val ephemeris_url: String,
     val ephemeris_args: EphemerisArgs
-)
+) {
+    fun getStartDateTimeInLocalTimeZone(): String {
+        return Instant.parse(tstart, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+
+    fun getEndDateTimeInLocalTimeZone(): String {
+        return Instant.parse(tend, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+}
 
 @Serializable
 data class EphemerisArgs(
@@ -127,7 +159,19 @@ data class TransitData(
     val tstart: String,
     val tend: String,
     val category: String
-)
+) {
+    fun getStartDateTimeInLocalTimeZone(): String {
+        return Instant.parse(tstart, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+
+    fun getEndDateTimeInLocalTimeZone(): String {
+        return Instant.parse(tend, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+}
 
 class SimpleScienceMissionJsonParser {
     private val json = Json {

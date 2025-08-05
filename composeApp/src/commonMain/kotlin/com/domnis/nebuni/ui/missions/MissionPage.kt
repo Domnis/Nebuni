@@ -133,8 +133,8 @@ fun OccultationMissionPage(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("From: ${data.tstart}")
-            Text("To: ${data.tend}")
+            Text("From: ${data.getStartDateTimeInLocalTimeZone()}")
+            Text("To: ${data.getEndDateTimeInLocalTimeZone()}")
             Text("Duration: ${data.duration}")
         }
 
@@ -147,7 +147,7 @@ fun OccultationMissionPage(
 
             Text("RA: ${data.ra_hms} (${data.ra})")
             Text("Dec: ${data.dec_dms} (${data.dec})")
-            Text("Alt/Az: ${data.alt} / ${data.az} (${data.cardinal_direction})")
+            Text("Alt/Az: ${data.alt}° / ${data.az}° (${data.cardinal_direction})")
             Text("Constellation: ${data.constellation}")
         }
 
@@ -172,8 +172,8 @@ fun CometMissionPage(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("From: ${data.tstart}")
-            Text("To: ${data.tend}")
+            Text("From: ${data.tstart} (UTC)")
+            Text("To: ${data.tend} (UTC)")
         }
 
         HorizontalDivider()
@@ -197,8 +197,8 @@ fun DefenseMissionPage(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("From: ${data.tstart}")
-            Text("To: ${data.tend}")
+            Text("From: ${data.getStartDateTimeInLocalTimeZone()}")
+            Text("To: ${data.getEndDateTimeInLocalTimeZone()}")
         }
 
         HorizontalDivider()
@@ -222,8 +222,8 @@ fun TransitMissionPage(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("From: ${data.tstart}")
-            Text("To: ${data.tend}")
+            Text("From: ${data.getStartDateTimeInLocalTimeZone()}")
+            Text("To: ${data.getEndDateTimeInLocalTimeZone()}")
             Text("Duration: ${data.duration}")
         }
 
@@ -236,7 +236,7 @@ fun TransitMissionPage(
 
             Text("RA: ${data.ra_hms} (${data.ra})")
             Text("Dec: ${data.dec_dms} (${data.dec})")
-            Text("Alt/Az: ${data.alt} / ${data.az} (${data.cardinal_direction})")
+            Text("Alt/Az: ${data.alt}° / ${data.az}° (${data.cardinal_direction})")
             Text("Constellation: ${data.constellation}")
         }
 

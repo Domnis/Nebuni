@@ -33,9 +33,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -74,6 +74,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
+import com.domnis.nebuni.convertCurrentDateAndTimeToLocalTimeZone
 import com.domnis.nebuni.ui.missions.EmptyMissionPage
 import com.domnis.nebuni.ui.missions.MissionPage
 import kotlinx.coroutines.launch
@@ -201,7 +202,11 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
 
                                     Spacer(modifier = Modifier.width(8.dp))
 
-                                    Text("${startDateTime.replace('T', ' ')} -> ${endDateTime.replace('T', ' ')} (UTC)")
+                                    Text(
+                                        convertCurrentDateAndTimeToLocalTimeZone(startDateTime) +
+                                            " -> " +
+                                            convertCurrentDateAndTimeToLocalTimeZone(endDateTime)
+                                    )
                                 }
 
                                 HorizontalDivider()
@@ -240,7 +245,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                             }
                         }
 
-                        item { Spacer(Modifier.height(64.dp)) }
+                        item { Spacer(Modifier.height(72.dp)) }
                     }
 
                     AnimatedVisibility(
@@ -264,7 +269,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                         },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .systemBarsPadding(),
+                            .navigationBarsPadding(),
                         enabled = !isLoadingMissions
                     ) {
                         Text("Fetch science missions")

@@ -19,11 +19,17 @@
 package com.domnis.nebuni
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
+import kotlinx.datetime.format.DateTimeComponents
+import kotlinx.datetime.format.DateTimeComponents.Companion.Format
+import kotlinx.datetime.format.DateTimeFormat
+import kotlinx.datetime.format.alternativeParsing
 import kotlinx.datetime.format.char
+import kotlinx.datetime.format.optional
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -46,4 +52,56 @@ fun getCurrentDateAndTimeWithOffset(offsetInDay: Int) : String {
         char('T')
         hour(); char(':'); minute()
     })
+}
+
+fun convertCurrentDateAndTimeToLocalTimeZone(currentDateAndTime: String): String {
+    return Instant.parse(
+        currentDateAndTime,
+        Format {
+            date(LocalDate.Formats.ISO)
+            alternativeParsing({
+                char('t')
+            }) {
+                char('T')
+            }
+            hour(); char(':'); minute()
+            optional {
+                char(':')
+                second()
+            }
+            optional {
+                char('.')
+                secondFraction(1, 9)
+            }
+        }
+    )
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .format(customDisplayDateTimeFormat())
+}
+
+fun customInstantParseFormat(): DateTimeFormat<DateTimeComponents> {
+    return Format {
+        date(LocalDate.Formats.ISO)
+        alternativeParsing({
+            char('t')
+        }) {
+            char('T')
+        }
+        hour(); char(':'); minute(); char(':'); second()
+        optional {
+            char('.')
+            secondFraction(1, 9)
+        }
+    }
+}
+
+fun customDisplayDateTimeFormat(): DateTimeFormat<LocalDateTime> {
+    return LocalDateTime.Format {
+        date(LocalDate.Formats.ISO)
+        char(' ')
+        hour(); char(':'); minute()
+        optional {
+            char(':'); second()
+        }
+    }
 }
