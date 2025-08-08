@@ -7,6 +7,20 @@ Nebuni is an open source cross-platform app helping to use your Unistellar's tel
 
 The first feature will be to fetch science missions, storing them locally for offline use and with an option to open official Unistellar's app science page, like if using the science website.
 
+## 📸 Screenshots
+
+<p align="center">
+  <a href="misc/pictures/screenshots/iOS/screenshot_01.png">
+    <img src="misc/pictures/screenshots/iOS/screenshot_01.png" width="250" alt="Nebuni Screenshot 1"/>
+  </a>
+  <a href="misc/pictures/screenshots/iOS/screenshot_02.png">
+    <img src="misc/pictures/screenshots/iOS/screenshot_02.png" width="250" alt="Nebuni Screenshot 2"/>
+  </a>
+  <a href="misc/pictures/screenshots/iOS/screenshot_03.png">
+    <img src="misc/pictures/screenshots/iOS/screenshot_03.png" width="250" alt="Nebuni Screenshot 3"/>
+  </a>
+</p>
+
 # Why Nebuni?
 I'm a user of Unistellar's telescope and one thing I missed to do more science is a tool to help me find missions, especially when I'm connected to my telescope, without internet access.
 
