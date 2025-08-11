@@ -7,6 +7,13 @@ Nebuni is an open source cross-platform app helping to use your Unistellar's tel
 
 The first feature will be to fetch science missions, storing them locally for offline use and with an option to open official Unistellar's app science page, like if using the science website.
 
+## Beta versions
+### iOS and iPadOS
+For iOS users, go to this [link](https://testflight.apple.com/join/NMbXYvmA), follow instruction provide by Apple and join the beta program of Nebuni 🐰
+
+### Android phone and tablet
+For Android users, go to this [link](https://play.google.com/store/apps/details?id=com.domnis.nebuni), accept conditions if needed and install the beta version of Nebuni's app! 🐰
+
 ## 📸 Screenshots
 
 <p align="center">
