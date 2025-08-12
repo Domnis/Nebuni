@@ -28,11 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-@Immutable
-data class ExtendedColorScheme(
-    val customColor1: ColorFamily,
-)
-
 val lightScheme = lightColorScheme(
     primary = primaryLight,
     onPrimary = onPrimaryLight,
@@ -289,7 +284,7 @@ fun NebuniTheme(
 
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
-        typography = AppTypography,
+        typography = appTypography(),
         content = content
     )
 }

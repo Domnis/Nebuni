@@ -23,6 +23,7 @@ import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.SimpleScienceMissionJsonParser
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.submitForm
 import io.ktor.http.HttpStatusCode
@@ -32,6 +33,12 @@ import kotlinx.serialization.json.Json
 
 class ScienceAPI {
     private val httpClient = HttpClient {
+        install(HttpTimeout) {
+            connectTimeoutMillis = 30_000
+            socketTimeoutMillis = 60_000
+            requestTimeoutMillis = 70_000
+        }
+
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true

@@ -43,11 +43,18 @@ class MainViewModel(var appState: AppState): ViewModel() {
 
     fun refreshScienceMissions() {
         isLoadingMissions.value = true
+
+        val newStartTime = getCurrentDateAndTime()
+        val newEndTime = getCurrentDateAndTimeWithOffset(12)
+
+        startTime.value = newStartTime
+        endTime.value = newEndTime
+
         viewModelScope.launch(Dispatchers.Default) {
             val apiResult = ScienceAPI().listScienceMissions(
                 observationPlace = appState.currentObservationPlace.value,
-                startDateTime = startTime.value,
-                endDateTime = endTime.value
+                startDateTime = newStartTime,
+                endDateTime = newEndTime
             )
 
             launch(Dispatchers.Main) {

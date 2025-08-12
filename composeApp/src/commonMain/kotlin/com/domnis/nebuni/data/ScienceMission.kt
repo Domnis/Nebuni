@@ -95,7 +95,7 @@ data class CometData(
     val priority: Boolean,
     val ephemeris_url: String,
     val ephemeris_args: EphemerisArgs
-) // no parsing for comet as format is a bit different there.
+) // no parsing for comet as date and time format is a bit different there.
 // Seems like tstart and tend are in year-month-day format
 // and define a range of multiple month of visibility.
 
@@ -113,12 +113,16 @@ data class DefenseData(
     val ephemeris_args: EphemerisArgs
 ) {
     fun getStartDateTimeInLocalTimeZone(): String {
+        if (!tstart.contains('T', true)) return tstart
+
         return Instant.parse(tstart, customInstantParseFormat())
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(customDisplayDateTimeFormat())
     }
 
     fun getEndDateTimeInLocalTimeZone(): String {
+        if (!tend.contains('T', true)) return tend
+
         return Instant.parse(tend, customInstantParseFormat())
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(customDisplayDateTimeFormat())

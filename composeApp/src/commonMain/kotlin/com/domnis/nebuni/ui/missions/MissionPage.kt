@@ -50,6 +50,7 @@ import com.domnis.nebuni.data.DefenseData
 import com.domnis.nebuni.data.OccultationData
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.TransitData
+import com.domnis.nebuni.ui.theme.fontStyle_header
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.nebuni
 import org.jetbrains.compose.resources.painterResource
@@ -129,7 +130,7 @@ fun OccultationMissionPage(
         HorizontalDivider()
 
         Column {
-            Text("Date and duration:")
+            Text("Date and duration:", style = fontStyle_header)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -141,7 +142,7 @@ fun OccultationMissionPage(
         HorizontalDivider()
 
         Column {
-            Text("Position:")
+            Text("Position:", style = fontStyle_header)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -168,7 +169,7 @@ fun CometMissionPage(
         HorizontalDivider()
 
         Column {
-            Text("Date and duration:")
+            Text("Date and duration:", style = fontStyle_header)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -193,7 +194,7 @@ fun DefenseMissionPage(
         HorizontalDivider()
 
         Column {
-            Text("Date and duration:")
+            Text("Date and duration:", style = fontStyle_header)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -218,7 +219,7 @@ fun TransitMissionPage(
         HorizontalDivider()
 
         Column {
-            Text("Date and duration:")
+            Text("Date and duration:", style = fontStyle_header)
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -230,7 +231,7 @@ fun TransitMissionPage(
         HorizontalDivider()
 
         Column {
-            Text("Position:")
+            Text("Position:", style = fontStyle_header)
 
             Spacer(modifier = Modifier.height(8.dp))
 
