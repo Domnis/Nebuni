@@ -55,7 +55,7 @@ class ScienceAPI {
         observationPlace: ObservationPlace,
         startDateTime: String,
         endDateTime: String
-    ): Map<String, ScienceMission> {
+    ): List<ScienceMission> {
         val response = try {
             httpClient.submitForm(
                 "https://science.unistellar.com/wp-admin/admin-ajax.php",
@@ -76,7 +76,7 @@ class ScienceAPI {
         }
 
         if (response == null || response.status != HttpStatusCode.OK) {
-            return emptyMap()
+            return emptyList()
         }
 
         val parser = SimpleScienceMissionJsonParser()

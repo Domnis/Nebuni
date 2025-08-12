@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.domnis.nebuni.data.CometData
 import com.domnis.nebuni.data.DefenseData
 import com.domnis.nebuni.data.OccultationData
@@ -52,6 +53,7 @@ import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.TransitData
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.e911_emergency
 import nebuni.composeapp.generated.resources.nebuni
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -59,7 +61,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun MissionPage(
-    missionKey: String,
     mission: ScienceMission
 ) {
     Column(
@@ -125,7 +126,27 @@ fun OccultationMissionPage(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Target: ${data.target_name}")
+        if (data.priority) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.e911_emergency),
+                    contentDescription = "A priority icon"
+                )
+
+                Text(
+                    "This mission is a priority",
+                    maxLines = 1,
+                    fontSize = 18.sp
+                )
+            }
+        }
+
+        Column {
+            Text("Mission type: Asteroid occultations")
+            Text("Target: ${data.target_name}")
+        }
 
         HorizontalDivider()
 
@@ -164,7 +185,27 @@ fun CometMissionPage(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Target: ${data.target_name}")
+        if (data.priority) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.e911_emergency),
+                    contentDescription = "A priority icon"
+                )
+
+                Text(
+                    "This mission is a priority",
+                    maxLines = 1,
+                    fontSize = 18.sp
+                )
+            }
+        }
+
+        Column {
+            Text("Mission type: Cometary activity")
+            Text("Target: ${data.target_name}")
+        }
 
         HorizontalDivider()
 
@@ -189,7 +230,27 @@ fun DefenseMissionPage(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Target: ${data.target_name}")
+        if (data.priority) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.e911_emergency),
+                    contentDescription = "A priority icon"
+                )
+
+                Text(
+                    "This mission is a priority",
+                    maxLines = 1,
+                    fontSize = 18.sp
+                )
+            }
+        }
+
+        Column {
+            Text("Mission type: Planetary Defense")
+            Text("Target: ${data.target_name}")
+        }
 
         HorizontalDivider()
 
@@ -214,7 +275,27 @@ fun TransitMissionPage(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Target: ${data.target_name}")
+        if (data.priority) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.e911_emergency),
+                    contentDescription = "A priority icon"
+                )
+
+                Text(
+                    "This mission is a priority",
+                    maxLines = 1,
+                    fontSize = 18.sp
+                )
+            }
+        }
+
+        Column {
+            Text("Mission type: Exoplanet transits")
+            Text("Target: ${data.target_name}")
+        }
 
         HorizontalDivider()
 

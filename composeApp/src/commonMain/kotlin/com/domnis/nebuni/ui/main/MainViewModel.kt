@@ -31,8 +31,8 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(var appState: AppState): ViewModel() {
     var isLoadingMissions = mutableStateOf(false)
-    var scienceMissionMap = mutableStateOf(emptyMap<String, ScienceMission>())
-    var selectedMission = mutableStateOf<String?>(null)
+    var scienceMissionList = mutableStateOf(emptyList<ScienceMission>())
+    var selectedMission = mutableStateOf<ScienceMission?>(null)
 
     var startTime = mutableStateOf(getCurrentDateAndTime())
     var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
@@ -55,16 +55,16 @@ class MainViewModel(var appState: AppState): ViewModel() {
                 observationPlace = appState.currentObservationPlace.value,
                 startDateTime = newStartTime,
                 endDateTime = newEndTime
-            )
+            ).sortedBy { it.getMissionStartTimestamp() } //sort missions by date for now
 
             launch(Dispatchers.Main) {
                 isLoadingMissions.value = false
-                scienceMissionMap.value = apiResult
+                scienceMissionList.value = apiResult
             }
         }
     }
 
-    fun selectMission(mission: String) {
+    fun selectMission(mission: ScienceMission) {
         selectedMission.value = mission
     }
 

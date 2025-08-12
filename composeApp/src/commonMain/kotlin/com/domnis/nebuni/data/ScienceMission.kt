@@ -20,6 +20,7 @@ package com.domnis.nebuni.data
 
 import com.domnis.nebuni.customDisplayDateTimeFormat
 import com.domnis.nebuni.customInstantParseFormat
+import com.domnis.nebuni.parseDateToInstant
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
@@ -32,21 +33,61 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 
 @Serializable
-sealed class ScienceMission {
+sealed class ScienceMission(open val missionKey: String) {
     @Serializable
-    data class Occultation(val data: OccultationData) : ScienceMission()
+    data class Occultation(val key: String, val data: OccultationData) : ScienceMission(key)
 
     @Serializable
-    data class Comet(val data: CometData) : ScienceMission()
+    data class Comet(val key: String, val data: CometData) : ScienceMission(key)
 
     @Serializable
-    data class Defense(val data: DefenseData) : ScienceMission()
+    data class Defense(val key: String, val data: DefenseData) : ScienceMission(key)
 
     @Serializable
-    data class Transit(val data: TransitData) : ScienceMission()
+    data class Transit(val key: String, val data: TransitData) : ScienceMission(key)
 
     @Serializable
-    data class Unknown(val content: String) : ScienceMission()
+    data class Unknown(val key: String, val content: String) : ScienceMission(key)
+
+    fun getMissionName() : String {
+        return when (this) {
+            is Occultation -> this.data.target_name
+            is Comet -> this.data.target_name
+            is Defense -> this.data.target_name
+            is Transit -> this.data.target_name
+            else -> this.missionKey
+        }
+    }
+
+    fun isPriority(): Boolean {
+        return when (this) {
+            is Occultation -> this.data.priority
+            is Comet -> this.data.priority
+            is Defense -> this.data.priority
+            is Transit -> this.data.priority
+            else -> false
+        }
+    }
+
+    fun getMissionStartDate() : String {
+        return when (this) {
+            is Occultation -> this.data.getStartDateTimeInLocalTimeZone()
+            is Comet -> this.data.tstart
+            is Defense -> this.data.getStartDateTimeInLocalTimeZone()
+            is Transit -> this.data.getStartDateTimeInLocalTimeZone()
+            else -> ""
+        }
+    }
+
+    fun getMissionStartTimestamp(): Long {
+        return when (this) {
+            is Occultation -> this.data.getStartTimestamp()
+            is Comet -> this.data.getStartTimestamp()
+            is Defense -> this.data.getStartTimestamp()
+            is Transit -> this.data.getStartTimestamp()
+            else -> Long.MAX_VALUE
+        }
+    }
 }
 
 @Serializable
@@ -83,6 +124,10 @@ data class OccultationData(
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(customDisplayDateTimeFormat())
     }
+
+    fun getStartTimestamp(): Long {
+        return Instant.parse(tstart, customInstantParseFormat()).toEpochMilliseconds()
+    }
 }
 
 @Serializable
@@ -95,9 +140,30 @@ data class CometData(
     val priority: Boolean,
     val ephemeris_url: String,
     val ephemeris_args: EphemerisArgs
-) // no parsing for comet as date and time format is a bit different there.
-// Seems like tstart and tend are in year-month-day format
-// and define a range of multiple month of visibility.
+) {
+    fun getStartDateTimeInLocalTimeZone(): String {
+        if (!tstart.contains('T', true)) return tstart
+
+        return Instant.parse(tstart, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+
+    fun getEndDateTimeInLocalTimeZone(): String {
+        if (!tend.contains('T', true)) return tend
+
+        return Instant.parse(tend, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+
+    fun getStartTimestamp(): Long {
+        if (!tstart.contains('T', true))
+            return parseDateToInstant(tstart, TimeZone.currentSystemDefault()).toEpochMilliseconds()
+
+        return Instant.parse(tstart, customInstantParseFormat()).toEpochMilliseconds()
+    }
+}
 
 @Serializable
 data class DefenseData(
@@ -126,6 +192,13 @@ data class DefenseData(
         return Instant.parse(tend, customInstantParseFormat())
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(customDisplayDateTimeFormat())
+    }
+
+    fun getStartTimestamp(): Long {
+        if (!tstart.contains('T', true))
+            return parseDateToInstant(tstart, TimeZone.currentSystemDefault()).toEpochMilliseconds()
+
+        return Instant.parse(tstart, customInstantParseFormat()).toEpochMilliseconds()
     }
 }
 
@@ -175,6 +248,10 @@ data class TransitData(
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(customDisplayDateTimeFormat())
     }
+
+    fun getStartTimestamp(): Long {
+        return Instant.parse(tstart, customInstantParseFormat()).toEpochMilliseconds()
+    }
 }
 
 class SimpleScienceMissionJsonParser {
@@ -183,15 +260,16 @@ class SimpleScienceMissionJsonParser {
         isLenient = true
     }
 
-    fun parseJson(jsonString: String): Map<String, ScienceMission> {
+    fun parseJson(jsonString: String): List<ScienceMission> {
         // Parse as generic JsonObject first
         val jsonObject = json.parseToJsonElement(jsonString).jsonObject
-        val result = mutableMapOf<String, ScienceMission>()
+        val result = mutableListOf<ScienceMission>()
 
         jsonObject.forEach { (key, value) ->
             if (key != "query") {
                 val content = determineTypeAndParse(key, value.jsonObject)
-                result[key] = content
+//                result[key] = content
+                result.add(content)
             }
         }
 
@@ -203,25 +281,25 @@ class SimpleScienceMissionJsonParser {
             when {
                 // Check if key contains some wording
                 key.contains("_occultation_") -> {
-                    ScienceMission.Occultation(json.decodeFromJsonElement<OccultationData>(jsonObject))
+                    ScienceMission.Occultation(key, json.decodeFromJsonElement<OccultationData>(jsonObject))
                 }
                 key.contains("_comet_") -> {
-                    ScienceMission.Comet(json.decodeFromJsonElement<CometData>(jsonObject))
+                    ScienceMission.Comet(key, json.decodeFromJsonElement<CometData>(jsonObject))
                 }
                 key.contains("_transit_") -> {
-                    ScienceMission.Transit(json.decodeFromJsonElement<TransitData>(jsonObject))
+                    ScienceMission.Transit(key, json.decodeFromJsonElement<TransitData>(jsonObject))
                 }
                 key.contains("_defense_") -> {
-                    ScienceMission.Defense(json.decodeFromJsonElement<DefenseData>(jsonObject))
+                    ScienceMission.Defense(key, json.decodeFromJsonElement<DefenseData>(jsonObject))
                 }
                 else -> {
-                    ScienceMission.Unknown(jsonObject.toString())
+                    ScienceMission.Unknown(key, jsonObject.toString())
                 }
             }
         } catch (e: SerializationException) {
             e.printStackTrace()
             // If parsing fails, store as unknown
-            ScienceMission.Unknown(jsonObject.toString())
+            ScienceMission.Unknown(key, jsonObject.toString())
         }
     }
 }

@@ -23,6 +23,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.format
 import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.format.DateTimeComponents.Companion.Format
@@ -93,6 +94,14 @@ fun customInstantParseFormat(): DateTimeFormat<DateTimeComponents> {
             secondFraction(1, 9)
         }
     }
+}
+
+fun parseDateToInstant(
+    dateString: String,
+    timeZone: TimeZone = TimeZone.UTC
+): Instant { //use to parse "YYYY-MM-DD" date format
+    val localDate = LocalDate.parse(dateString)
+    return localDate.atStartOfDayIn(timeZone)
 }
 
 fun customDisplayDateTimeFormat(): DateTimeFormat<LocalDateTime> {

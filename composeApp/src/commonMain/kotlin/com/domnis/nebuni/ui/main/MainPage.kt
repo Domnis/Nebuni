@@ -75,13 +75,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.convertCurrentDateAndTimeToLocalTimeZone
 import com.domnis.nebuni.ui.missions.EmptyMissionPage
 import com.domnis.nebuni.ui.missions.MissionPage
+import com.domnis.nebuni.ui.theme.fontStyle_header
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.e911_emergency
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -107,7 +112,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
     var isLoadingMissions by mainViewModel.isLoadingMissions
     var isListAndDetailVisible by remember { mutableStateOf(false) }
 
-    var scienceMissionMap by mainViewModel.scienceMissionMap
+    var scienceMissionList by mainViewModel.scienceMissionList
     var selectedMission by mainViewModel.selectedMission
 
     var startDateTime by mainViewModel.startTime
@@ -128,10 +133,16 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(if (!isListAndDetailVisible && !selectedMission.isNullOrEmpty()) selectedMission!! else "Nebuni")
+                    Text(
+                        if (!isListAndDetailVisible && selectedMission != null)
+                            selectedMission!!.getMissionName()
+                        else "Nebuni",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 },
                 navigationIcon = {
-                    if (!isListAndDetailVisible && !selectedMission.isNullOrEmpty()) {
+                    if (!isListAndDetailVisible && selectedMission != null) {
                         IconButton(
                             onClick = {
                                 onBack()
@@ -145,7 +156,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                     }
                 },
                 actions = {
-                    if (isListAndDetailVisible || selectedMission.isNullOrEmpty()) {
+                    if (isListAndDetailVisible || selectedMission == null) {
                         FilledIconButton(
                             onClick = {
                                 mainViewModel.refreshScienceMissions()
@@ -222,11 +233,12 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                             }
                         }
 
-                        items(scienceMissionMap.keys.toList()) { key ->
+                        items(scienceMissionList) { mission ->
+                            val isSelected = selectedMission?.missionKey == mission.missionKey
                             Column(
                                 Modifier.fillMaxWidth()
                                     .background(
-                                        color = if (selectedMission == key)
+                                        color = if (isSelected)
                                             LocalTextSelectionColors.current.backgroundColor
                                         else Color.Transparent,
                                         shape = RoundedCornerShape(16.dp)
@@ -240,9 +252,9 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     .clickable(
                                         interactionSource = null,
                                         indication = null,
-                                        onClickLabel = "Get information for science mission named: $key",
+                                        onClickLabel = "Get information for science mission named: ${mission.getMissionName()}",
                                         onClick = {
-                                            mainViewModel.selectMission(key)
+                                            mainViewModel.selectMission(mission)
 
                                             scope.launch {
                                                 navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
@@ -250,7 +262,31 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                         }
                                     ),
                             ) {
-                                Text(key, maxLines = 1)
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        if (mission.isPriority()) {
+                                            Icon(
+                                                painter = painterResource(Res.drawable.e911_emergency),
+                                                contentDescription = "A priority icon"
+                                            )
+                                        }
+
+                                        Text(
+                                            mission.getMissionName(),
+                                            maxLines = 1,
+                                            style = fontStyle_header
+                                        )
+                                    }
+
+                                    Text(
+                                        "Start at: ${mission.getMissionStartDate()}",
+                                        maxLines = 1
+                                    )
+                                }
                             }
                         }
 
@@ -271,31 +307,16 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                             )
                         }
                     }
-
-//                    Button(
-//                        onClick = {
-//                            mainViewModel.refreshScienceMissions()
-//                        },
-//                        modifier = Modifier
-//                            .align(Alignment.BottomCenter)
-//                            .navigationBarsPadding(),
-//                        enabled = !isLoadingMissions
-//                    ) {
-//                        Text("Fetch science missions")
-//                    }
                 }
             },
             detailPane = {
                 if (selectedMission == null) {
                     EmptyMissionPage()
                 } else {
-                    selectedMission?.let { missionKey ->
-                        scienceMissionMap[missionKey]?.let { mission ->
-                            MissionPage(
-                                missionKey,
-                                mission
-                            )
-                        }
+                    selectedMission?.let { mission ->
+                        MissionPage(
+                            mission
+                        )
                     }
                 }
             }
