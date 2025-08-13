@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  Hi, and welcome to the official repository of the Nebuni app!  
-  Available on <strong>Android</strong> and <strong>iOS</strong>, is a companion app designed to enhance your Unistellar experience.
+  Hi, and welcome to the official repository of the Nebuni app! <br/>
+  Available on <strong>Android</strong> and <strong>iOS</strong>, Nebuni is a companion app designed to enhance your Unistellar experience.
 </p>
 
 <p align="center">
@@ -77,7 +77,7 @@ And, in shorter way... Nebuni make me think about... a bunny 🐰! (So, in same 
 
 Also, Lepus is a small constellation, associated to Orion and his dogs (for story), but fainter than them... Like Nebuni, a smaller app than Unistellar's one (or any other company if some feature could be compatible to all of them)
 
-# 🗺️ Roadmap
+# 🗺 Roadmap
 Here are some elements to be added inside the app to have a good experience with the main feature currently focused.
 
 - [x] Call and fetch Unistellar's science API
