@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="/misc/pictures/nebuni_app_icon_small.png" alt="Nebuni's app icon" width="175"/>
+  <img src="/misc/pictures/nebuni_app_icon_small.png" alt="Nebuni's app icon" width="175" style="border-radius:22px"/>
 </p>
 
 <h1 align="center">Nebuni</h1>
