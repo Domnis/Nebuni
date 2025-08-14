@@ -18,21 +18,34 @@
 
 package com.domnis.nebuni.database
 
+import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.domnis.nebuni.data.ObservationPlace
+import com.domnis.nebuni.data.ScienceMission
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 internal const val DB_FILE_NAME = "nebuni.db"
 
-@Database(entities = [ObservationPlace::class], version = 1)
+@Database(
+    version = 2,
+    entities = [ObservationPlace::class, ScienceMission::class],
+    exportSchema = true,
+    autoMigrations = [
+        AutoMigration(1, 2)
+    ]
+)
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun getDao(): ObservationPlaceDao
+    abstract fun getObservationPlaceDao(): ObservationPlaceDao
+
+    abstract fun getScienceMissionDao(): ScienceMissionDao
 }
 
 // The Room compiler generates the `actual` implementations.

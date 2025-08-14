@@ -26,15 +26,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -44,13 +46,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.domnis.nebuni.data.CometData
-import com.domnis.nebuni.data.DefenseData
-import com.domnis.nebuni.data.OccultationData
 import com.domnis.nebuni.data.ScienceMission
-import com.domnis.nebuni.data.TransitData
+import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.e911_emergency
@@ -58,75 +58,63 @@ import nebuni.composeapp.generated.resources.nebuni
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 @Preview
 fun MissionPage(
-    mission: ScienceMission
+    mission: ScienceMission,
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = Modifier
+    Box(
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 8.dp)
             .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.Start,
+        contentAlignment = Alignment.TopStart,
     ) {
-
-        when (mission) {
-            is ScienceMission.Occultation -> OccultationMissionPage(mission.data)
-            is ScienceMission.Comet -> CometMissionPage(mission.data)
-            is ScienceMission.Defense -> DefenseMissionPage(mission.data)
-            is ScienceMission.Transit -> TransitMissionPage(mission.data)
-            else -> Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        val deepLink = when (mission) {
-            is ScienceMission.Occultation -> mission.data.deeplink
-            is ScienceMission.Comet -> mission.data.deeplink
-            is ScienceMission.Defense -> mission.data.deeplink
-            is ScienceMission.Transit -> mission.data.deeplink
-            else -> ""
-        }
-
-        if (deepLink.isNotEmpty()) {
-            val uriHandler = LocalUriHandler.current
-
-            Button(
-                onClick = {
-                    uriHandler.openUri(deepLink)
-                },
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .systemBarsPadding()
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("Open mission in Unistellar app")
-                    Icon(
-                        Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = "Open in external app's icon"
-                    )
-                }
-            }
+        if (mission.getMissionType() == ScienceMissionType.Unknown) {
+            Spacer(modifier = Modifier.height(12.dp))
         } else {
-            Column(
-                modifier = Modifier.systemBarsPadding()
-            ) {
-                Text("Deeplink is not available for this kind of mission...")
-            }
+            DataMissionPage(mission)
+        }
+
+        val uriHandler = LocalUriHandler.current
+        val missionDeeplinkIsNotEmpty = mission.deeplink.isNotEmpty()
+        val size = ButtonDefaults.MediumContainerHeight
+        Button(
+            onClick = {
+                uriHandler.openUri(mission.deeplink)
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .heightIn(size)
+                .padding(bottom = 8.dp),
+            enabled = missionDeeplinkIsNotEmpty,
+            contentPadding = ButtonDefaults.contentPaddingFor(size)
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = "Open in external app's icon",
+                modifier = Modifier.size(ButtonDefaults.iconSizeFor(size))
+            )
+
+            Spacer(Modifier.size(ButtonDefaults.iconSpacingFor(size)))
+
+            Text("Open mission in Unistellar app", style = ButtonDefaults.textStyleFor(size))
         }
     }
 }
 
 @Composable
-fun OccultationMissionPage(
-    data: OccultationData
+fun DataMissionPage(
+    mission: ScienceMission,
 ) {
+    val missionHasEphemerisArgs = mission.ephemeris_args != null
     Column(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        if (data.priority) {
+        if (mission.priority) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -136,7 +124,7 @@ fun OccultationMissionPage(
                 )
 
                 Text(
-                    "This mission is a priority",
+                    "This mission is a priority!",
                     maxLines = 1,
                     fontSize = 18.sp
                 )
@@ -144,8 +132,8 @@ fun OccultationMissionPage(
         }
 
         Column {
-            Text("Mission type: Asteroid occultations")
-            Text("Target: ${data.target_name}")
+            Text("Mission type: ${mission.getMissionType().displayName}")
+            Text("Target: ${mission.target_name}")
         }
 
         HorizontalDivider()
@@ -155,174 +143,29 @@ fun OccultationMissionPage(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("From: ${data.getStartDateTimeInLocalTimeZone()}")
-            Text("To: ${data.getEndDateTimeInLocalTimeZone()}")
-            Text("Duration: ${data.duration}")
-        }
-
-        HorizontalDivider()
-
-        Column {
-            Text("Position:", style = fontStyle_header)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("RA: ${data.ra_hms} (${data.ra})")
-            Text("Dec: ${data.dec_dms} (${data.dec})")
-            Text("Alt/Az: ${data.alt}° / ${data.az}° (${data.cardinal_direction})")
-            Text("Constellation: ${data.constellation}")
-        }
-
-        HorizontalDivider()
-    }
-}
-
-@Composable
-fun CometMissionPage(
-    data: CometData
-) {
-    Column(
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        if (data.priority) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.e911_emergency),
-                    contentDescription = "A priority icon"
-                )
-
-                Text(
-                    "This mission is a priority",
-                    maxLines = 1,
-                    fontSize = 18.sp
-                )
+            Text("From: ${mission.getMissionStartDate()}")
+            Text("To: ${mission.getMissionEndDate()}")
+            if (!missionHasEphemerisArgs) {
+                Text("Duration: ${mission.duration}")
             }
         }
 
-        Column {
-            Text("Mission type: Cometary activity")
-            Text("Target: ${data.target_name}")
-        }
-
         HorizontalDivider()
 
-        Column {
-            Text("Date and duration:", style = fontStyle_header)
+        if (!missionHasEphemerisArgs) {
+            Column {
+                Text("Position:", style = fontStyle_header)
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Text("From: ${data.tstart} (UTC)")
-            Text("To: ${data.tend} (UTC)")
-        }
-
-        HorizontalDivider()
-    }
-}
-
-@Composable
-fun DefenseMissionPage(
-    data: DefenseData
-) {
-    Column(
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        if (data.priority) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.e911_emergency),
-                    contentDescription = "A priority icon"
-                )
-
-                Text(
-                    "This mission is a priority",
-                    maxLines = 1,
-                    fontSize = 18.sp
-                )
+                Text("RA: ${mission.ra_hms} (${mission.ra})")
+                Text("Dec: ${mission.dec_dms} (${mission.dec})")
+                Text("Alt/Az: ${mission.alt}° / ${mission.az}° (${mission.cardinal_direction})")
+                Text("Constellation: ${mission.constellation}")
             }
+
+            HorizontalDivider()
         }
-
-        Column {
-            Text("Mission type: Planetary Defense")
-            Text("Target: ${data.target_name}")
-        }
-
-        HorizontalDivider()
-
-        Column {
-            Text("Date and duration:", style = fontStyle_header)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("From: ${data.getStartDateTimeInLocalTimeZone()}")
-            Text("To: ${data.getEndDateTimeInLocalTimeZone()}")
-        }
-
-        HorizontalDivider()
-    }
-}
-
-@Composable
-fun TransitMissionPage(
-    data: TransitData
-) {
-    Column(
-        horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        if (data.priority) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.e911_emergency),
-                    contentDescription = "A priority icon"
-                )
-
-                Text(
-                    "This mission is a priority",
-                    maxLines = 1,
-                    fontSize = 18.sp
-                )
-            }
-        }
-
-        Column {
-            Text("Mission type: Exoplanet transits")
-            Text("Target: ${data.target_name}")
-        }
-
-        HorizontalDivider()
-
-        Column {
-            Text("Date and duration:", style = fontStyle_header)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("From: ${data.getStartDateTimeInLocalTimeZone()}")
-            Text("To: ${data.getEndDateTimeInLocalTimeZone()}")
-            Text("Duration: ${data.duration}")
-        }
-
-        HorizontalDivider()
-
-        Column {
-            Text("Position:", style = fontStyle_header)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("RA: ${data.ra_hms} (${data.ra})")
-            Text("Dec: ${data.dec_dms} (${data.dec})")
-            Text("Alt/Az: ${data.alt}° / ${data.az}° (${data.cardinal_direction})")
-            Text("Constellation: ${data.constellation}")
-        }
-
-        HorizontalDivider()
     }
 }
 
@@ -343,7 +186,10 @@ fun EmptyMissionPage() {
                 contentScale = ContentScale.Crop,
             )
 
-            Text("No mission is currently selected...\nChoose one on the side menu!")
+            Text(
+                "No mission is currently selected...\nChoose one on the side menu!",
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

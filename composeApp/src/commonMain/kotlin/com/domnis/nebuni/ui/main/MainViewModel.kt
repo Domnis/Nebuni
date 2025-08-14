@@ -23,13 +23,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.data.ScienceMissionType
+import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.getCurrentDateAndTimeWithOffset
 import com.domnis.nebuni.network.ScienceAPI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class MainViewModel(var appState: AppState): ViewModel() {
+class MainViewModel(var appState: AppState, val database: AppDatabase): ViewModel() {
     var isLoadingMissions = mutableStateOf(false)
     var scienceMissionList = mutableStateOf(emptyList<ScienceMission>())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
@@ -38,6 +40,13 @@ class MainViewModel(var appState: AppState): ViewModel() {
     var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
 
     init {
+        viewModelScope.launch {
+            database.getScienceMissionDao().getAllAsFlow().collect { missions ->
+                //sort missions by date for now
+                scienceMissionList.value = missions.sortedBy { it.getMissionStartTimestamp() }
+            }
+        }
+
         refreshScienceMissions()
     }
 
@@ -55,11 +64,20 @@ class MainViewModel(var appState: AppState): ViewModel() {
                 observationPlace = appState.currentObservationPlace.value,
                 startDateTime = newStartTime,
                 endDateTime = newEndTime
-            ).sortedBy { it.getMissionStartTimestamp() } //sort missions by date for now
+            )
+                .filter { it.getMissionType() != ScienceMissionType.Unknown } // remove missions with unknown type
+
+            launch {
+                val scienceMissionDao = database.getScienceMissionDao()
+                if (apiResult.isNotEmpty()) {
+                    scienceMissionDao.clearAll()
+
+                    scienceMissionDao.insertAll(apiResult)
+                }
+            }
 
             launch(Dispatchers.Main) {
                 isLoadingMissions.value = false
-                scienceMissionList.value = apiResult
             }
         }
     }

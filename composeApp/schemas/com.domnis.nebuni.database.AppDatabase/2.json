@@ -1,0 +1,269 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "921834ffa9908a09ad718c727d76b4e4",
+    "entities": [
+      {
+        "tableName": "ObservationPlace",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `altMin` INTEGER NOT NULL, `altMax` INTEGER NOT NULL, `azMin` INTEGER NOT NULL, `azMax` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "altMin",
+            "columnName": "altMin",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "altMax",
+            "columnName": "altMax",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "azMin",
+            "columnName": "azMin",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "azMax",
+            "columnName": "azMax",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "ScienceMission",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`missionKey` TEXT NOT NULL, `pipeline_type` TEXT NOT NULL, `target_name` TEXT NOT NULL, `target_number` TEXT NOT NULL, `orbit_type` TEXT NOT NULL, `ra` TEXT NOT NULL, `dec` TEXT NOT NULL, `ra_hms` TEXT NOT NULL, `dec_dms` TEXT NOT NULL, `alt` INTEGER NOT NULL, `az` INTEGER NOT NULL, `cardinal_direction` TEXT NOT NULL, `constellation` TEXT NOT NULL, `kml_url` TEXT NOT NULL, `deeplink` TEXT NOT NULL, `duration` TEXT NOT NULL, `et` INTEGER NOT NULL, `gain` INTEGER NOT NULL, `cadence` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `tstart` TEXT NOT NULL, `tend` TEXT NOT NULL, `ephemeris_url` TEXT NOT NULL, `category` TEXT NOT NULL, `eph_args_name` TEXT, `eph_args_loc` TEXT, `eph_args_tstart` TEXT, `eph_args_auto_step` TEXT, `eph_args_duration` TEXT, `eph_args_gain` TEXT, `eph_args_exp_time` TEXT, `eph_args_is_comet` TEXT, PRIMARY KEY(`missionKey`))",
+        "fields": [
+          {
+            "fieldPath": "missionKey",
+            "columnName": "missionKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pipeline_type",
+            "columnName": "pipeline_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "target_name",
+            "columnName": "target_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "target_number",
+            "columnName": "target_number",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "orbit_type",
+            "columnName": "orbit_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ra",
+            "columnName": "ra",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dec",
+            "columnName": "dec",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ra_hms",
+            "columnName": "ra_hms",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dec_dms",
+            "columnName": "dec_dms",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alt",
+            "columnName": "alt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "az",
+            "columnName": "az",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardinal_direction",
+            "columnName": "cardinal_direction",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "constellation",
+            "columnName": "constellation",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kml_url",
+            "columnName": "kml_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deeplink",
+            "columnName": "deeplink",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duration",
+            "columnName": "duration",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "et",
+            "columnName": "et",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gain",
+            "columnName": "gain",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cadence",
+            "columnName": "cadence",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tstart",
+            "columnName": "tstart",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tend",
+            "columnName": "tend",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ephemeris_url",
+            "columnName": "ephemeris_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ephemeris_args.name",
+            "columnName": "eph_args_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ephemeris_args.loc",
+            "columnName": "eph_args_loc",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ephemeris_args.tstart",
+            "columnName": "eph_args_tstart",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ephemeris_args.auto_step",
+            "columnName": "eph_args_auto_step",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ephemeris_args.duration",
+            "columnName": "eph_args_duration",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ephemeris_args.gain",
+            "columnName": "eph_args_gain",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ephemeris_args.exp_time",
+            "columnName": "eph_args_exp_time",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ephemeris_args.is_comet",
+            "columnName": "eph_args_is_comet",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "missionKey"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '921834ffa9908a09ad718c727d76b4e4')"
+    ]
+  }
+}

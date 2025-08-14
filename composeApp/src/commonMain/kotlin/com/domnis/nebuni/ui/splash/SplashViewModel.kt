@@ -32,7 +32,7 @@ class SplashViewModel(val appState: AppState, val database: AppDatabase): ViewMo
         viewModelScope.launch(Dispatchers.Default) {
             delay(2000)
 
-            database.getDao().getAllAsFlow().collect { places ->
+            database.getObservationPlaceDao().getAllAsFlow().collect { places ->
                 if (places.isNotEmpty()) {
                     appState.updateObservationPlace(places.first())
                     appState.navigateTo(Screen.Main)

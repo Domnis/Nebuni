@@ -22,9 +22,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +32,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -47,6 +45,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -55,8 +54,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
@@ -73,29 +74,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.convertCurrentDateAndTimeToLocalTimeZone
+import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.missions.EmptyMissionPage
 import com.domnis.nebuni.ui.missions.MissionPage
 import com.domnis.nebuni.ui.theme.fontStyle_header
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.e911_emergency
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-
-@Serializable
-object List
-
-@Serializable
-data class Detail(val key: String)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class,
     ExperimentalSharedTransitionApi::class, ExperimentalMaterial3AdaptiveApi::class,
@@ -105,8 +101,6 @@ data class Detail(val key: String)
 @Preview
 fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState = koinInject()) {
     val scope = rememberCoroutineScope()
-    val currentObservationPlace by appState.currentObservationPlace
-
     val navigator = rememberListDetailPaneScaffoldNavigator<Nothing>()
 
     var isLoadingMissions by mainViewModel.isLoadingMissions
@@ -121,7 +115,12 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
     val onBack = {
         scope.launch {
             navigator.navigateBack()
-            mainViewModel.unselectMission()
+
+            launch(Dispatchers.Default) {
+                delay(100) // add delay to avoid visual glitch
+
+                mainViewModel.unselectMission()
+            }
         }
     }
 
@@ -135,7 +134,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                 title = {
                     Text(
                         if (!isListAndDetailVisible && selectedMission != null)
-                            selectedMission!!.getMissionName()
+                            selectedMission!!.target_name
                         else "Nebuni",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -177,7 +176,8 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                 start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
                 top = paddingValues.calculateTopPadding(),
                 end = paddingValues.calculateEndPadding(LocalLayoutDirection.current),
-            ),
+            )
+                .padding(horizontal = 16.dp),
             directive = navigator.scaffoldDirective,
             value = navigator.scaffoldValue,
             listPane = {
@@ -187,110 +187,78 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
 
                 Box(
                     modifier = Modifier
-                        .padding(horizontal = 8.dp)
                         .fillMaxSize(),
                     contentAlignment = Alignment.TopCenter,
                 ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                    Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        item {
-                            Column(
+                        //header card
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.LocationOn,
+                                    contentDescription = "A location icon"
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Text("${appState.currentObservationPlace.value.latitude} / ${appState.currentObservationPlace.value.longitude}")
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.DateRange,
+                                    contentDescription = "A date range icon"
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Text(
+                                    convertCurrentDateAndTimeToLocalTimeZone(startDateTime) +
+                                            " -> " +
+                                            convertCurrentDateAndTimeToLocalTimeZone(
+                                                endDateTime
+                                            )
+                                )
+                            }
+
+                            HorizontalDivider()
+                        }
+
+                        AnimatedVisibility(
+                            visible = !isLoadingMissions,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.LocationOn,
-                                        contentDescription = "A location icon"
-                                    )
-
-                                    Spacer(modifier = Modifier.width(8.dp))
-
-                                    Text("${appState.currentObservationPlace.value.latitude} / ${appState.currentObservationPlace.value.longitude}")
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.DateRange,
-                                        contentDescription = "A date range icon"
-                                    )
-
-                                    Spacer(modifier = Modifier.width(8.dp))
-
-                                    Text(
-                                        convertCurrentDateAndTimeToLocalTimeZone(startDateTime) +
-                                            " -> " +
-                                            convertCurrentDateAndTimeToLocalTimeZone(endDateTime)
-                                    )
-                                }
-
-                                HorizontalDivider()
-                            }
-                        }
-
-                        items(scienceMissionList) { mission ->
-                            val isSelected = selectedMission?.missionKey == mission.missionKey
-                            Column(
-                                Modifier.fillMaxWidth()
-                                    .background(
-                                        color = if (isSelected)
-                                            LocalTextSelectionColors.current.backgroundColor
-                                        else Color.Transparent,
-                                        shape = RoundedCornerShape(16.dp)
-                                    )
-                                    .border(
-                                        1.dp,
-                                        color = LocalContentColor.current,
-                                        RoundedCornerShape(16.dp)
-                                    )
-                                    .padding(16.dp)
-                                    .clickable(
-                                        interactionSource = null,
-                                        indication = null,
-                                        onClickLabel = "Get information for science mission named: ${mission.getMissionName()}",
-                                        onClick = {
-                                            mainViewModel.selectMission(mission)
-
-                                            scope.launch {
-                                                navigator.navigateTo(ListDetailPaneScaffoldRole.Detail)
-                                            }
-                                        }
-                                    ),
-                            ) {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                items(scienceMissionList) { mission ->
+                                    ScienceMissionListItem(
+                                        mission,
+                                        isSelected = selectedMission?.missionKey == mission.missionKey
                                     ) {
-                                        if (mission.isPriority()) {
-                                            Icon(
-                                                painter = painterResource(Res.drawable.e911_emergency),
-                                                contentDescription = "A priority icon"
+                                        mainViewModel.selectMission(mission)
+
+                                        scope.launch {
+                                            navigator.navigateTo(
+                                                ListDetailPaneScaffoldRole.Detail
                                             )
                                         }
-
-                                        Text(
-                                            mission.getMissionName(),
-                                            maxLines = 1,
-                                            style = fontStyle_header
-                                        )
                                     }
-
-                                    Text(
-                                        "Start at: ${mission.getMissionStartDate()}",
-                                        maxLines = 1
-                                    )
                                 }
+
+                                item { Spacer(Modifier.height(72.dp)) }
                             }
                         }
-
-                        item { Spacer(Modifier.height(72.dp)) }
                     }
 
                     AnimatedVisibility(
@@ -310,16 +278,75 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                 }
             },
             detailPane = {
-                if (selectedMission == null) {
-                    EmptyMissionPage()
-                } else {
-                    selectedMission?.let { mission ->
-                        MissionPage(
-                            mission
-                        )
+                Surface(
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer
+                ) {
+                    if (selectedMission == null) {
+                        EmptyMissionPage()
+                    } else {
+                        selectedMission?.let { mission ->
+                            MissionPage(
+                                mission,
+                                modifier = Modifier
+                                    .padding(horizontal = 8.dp)
+                                    .padding(top = 16.dp)
+                                    .navigationBarsPadding()
+                            )
+                        }
                     }
                 }
             }
         )
+    }
+}
+
+@Composable
+fun ScienceMissionListItem(
+    mission: ScienceMission,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    onClick: () -> Unit
+) {
+    OutlinedCard(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        colors = if (isSelected)
+            CardDefaults.cardColors()
+                .copy(containerColor = LocalTextSelectionColors.current.backgroundColor)
+        else CardDefaults.cardColors(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (mission.priority) {
+                    Icon(
+                        painter = painterResource(Res.drawable.e911_emergency),
+                        contentDescription = "A priority icon"
+                    )
+                }
+
+                Text(
+                    mission.target_name,
+                    maxLines = 1,
+                    style = fontStyle_header
+                )
+            }
+
+            Text(
+                "Mission type: ${mission.getMissionType().displayName}",
+                maxLines = 1
+            )
+
+            Text(
+                "Start at: ${mission.getMissionStartDate()}",
+                maxLines = 1
+            )
+        }
     }
 }

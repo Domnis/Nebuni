@@ -139,7 +139,7 @@ fun WelcomePage(appState: AppState = koinInject(), database: AppDatabase = koinI
                     )
 
                     coroutineScope.launch(Dispatchers.Default) {
-                        database.getDao().insert(place)
+                        database.getObservationPlaceDao().insert(place)
                     }
 
                     appState.updateObservationPlace(place)
