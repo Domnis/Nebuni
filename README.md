@@ -48,6 +48,15 @@ The first feature will be to fetch science missions, storing them locally for of
   </a>
 </p>
 
+<p align="center">
+  <a href="misc/pictures/screenshots/iPadOS/screenshot_02.png">
+    <img src="misc/pictures/screenshots/iPadOS/screenshot_02.png" height="250" alt="Nebuni Screenshot iPad 2"/>
+  </a>
+  <a href="misc/pictures/screenshots/iPadOS/screenshot_03.png">
+    <img src="misc/pictures/screenshots/iPadOS/screenshot_03.png" height="250" alt="Nebuni Screenshot iPad 3"/>
+  </a>
+</p>
+
 # 🚀 Release
 Nebuni will be released on Apple's App Store and Google Play Store when the real v1 will be reach.
 
