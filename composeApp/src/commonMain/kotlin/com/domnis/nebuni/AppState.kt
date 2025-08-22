@@ -21,17 +21,12 @@ package com.domnis.nebuni
 import androidx.compose.runtime.mutableStateOf
 import com.domnis.nebuni.data.ObservationPlace
 
-enum class Screen { Splash, Welcome, Main }
+enum class Screen { Splash, Main }
 
 class AppState {
-//    val currentWindowSizeClass = mutableStateOf(WindowSizeClass.compute(300f, 1200f))
     val currentRootScreen = mutableStateOf(Screen.Splash)
 
     val currentObservationPlace = mutableStateOf(ObservationPlace())
-
-//    fun setWindowSizeClass(sizeClass: WindowSizeClass) {
-//        currentWindowSizeClass.value = sizeClass
-//    }
 
     fun navigateTo(newRootScreen: Screen) {
         if (newRootScreen == currentRootScreen.value) return

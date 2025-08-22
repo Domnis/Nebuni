@@ -19,19 +19,30 @@
 package com.domnis.nebuni.ui.main
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domnis.nebuni.AppState
+import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
-import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.getCurrentDateAndTimeWithOffset
-import com.domnis.nebuni.network.ScienceAPI
+import com.domnis.nebuni.repository.ScienceMissionRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class MainViewModel(var appState: AppState, val database: AppDatabase): ViewModel() {
+    enum class ObservationPlaceConfigurationState {
+        loading,
+        invalid,
+        valid
+    }
+
+    var currentObservationPlaceConfigurationState = mutableStateOf(ObservationPlaceConfigurationState.loading)
     var isLoadingMissions = mutableStateOf(false)
     var scienceMissionList = mutableStateOf(emptyList<ScienceMission>())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
@@ -39,15 +50,44 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
     var startTime = mutableStateOf(getCurrentDateAndTime())
     var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
 
+    private val scienceMissionRepository = ScienceMissionRepository(database)
+    private var missionJob: Job? = null
+
     init {
         viewModelScope.launch {
-            database.getScienceMissionDao().getAllAsFlow().collect { missions ->
-                //sort missions by date for now
-                scienceMissionList.value = missions.sortedBy { it.getMissionStartTimestamp() }
-            }
+            snapshotFlow { appState.currentObservationPlace.value }
+                .onEach {
+                    missionJob?.cancel()
+
+                    missionJob = viewModelScope.launch {
+                        scienceMissionRepository
+                            .getScienceMissionFor(appState.currentObservationPlace.value)
+                            .collect { missions ->
+                                //sort missions by date for now
+                                scienceMissionList.value =
+                                    missions.sortedBy { it.getMissionStartTimestamp() }
+                            }
+                    }
+                }
+                .launchIn(viewModelScope)
         }
 
-        refreshScienceMissions()
+        viewModelScope.launch {
+            database.getObservationPlaceDao().getAllAsFlow().collect { places ->
+                if (places.isNotEmpty()) {
+                    if (currentObservationPlaceConfigurationState.value != ObservationPlaceConfigurationState.valid) {
+                        val selectedObservationPlace = places.first()
+                        appState.updateObservationPlace(selectedObservationPlace)
+
+                        currentObservationPlaceConfigurationState.value = ObservationPlaceConfigurationState.valid
+                    }
+
+                    refreshScienceMissions()
+                } else {
+                    currentObservationPlaceConfigurationState.value = ObservationPlaceConfigurationState.invalid
+                }
+            }
+        }
     }
 
     fun refreshScienceMissions() {
@@ -60,25 +100,21 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
         endTime.value = newEndTime
 
         viewModelScope.launch(Dispatchers.Default) {
-            val apiResult = ScienceAPI().listScienceMissions(
-                observationPlace = appState.currentObservationPlace.value,
-                startDateTime = newStartTime,
-                endDateTime = newEndTime
+            scienceMissionRepository.refreshScienceMissions(
+                appState.currentObservationPlace.value,
+                newStartTime,
+                newEndTime
             )
-                .filter { it.getMissionType() != ScienceMissionType.Unknown } // remove missions with unknown type
-
-            launch {
-                val scienceMissionDao = database.getScienceMissionDao()
-                if (apiResult.isNotEmpty()) {
-                    scienceMissionDao.clearAll()
-
-                    scienceMissionDao.insertAll(apiResult)
-                }
-            }
 
             launch(Dispatchers.Main) {
                 isLoadingMissions.value = false
             }
+        }
+    }
+
+    fun addObservationPlace(newObservationPlace: ObservationPlace) {
+        viewModelScope.launch(Dispatchers.Default) {
+            database.getObservationPlaceDao().insert(newObservationPlace)
         }
     }
 

@@ -18,9 +18,9 @@
 
 package com.domnis.nebuni.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 import com.domnis.nebuni.customDisplayDateTimeFormat
 import com.domnis.nebuni.customInstantParseFormat
 import com.domnis.nebuni.parseDateToInstant
@@ -44,9 +44,10 @@ enum class ScienceMissionType(val displayName: String) {
 }
 
 @Serializable
-@Entity
+@Entity(primaryKeys = ["missionKey", "observationPlaceID"])
 data class ScienceMission(
-    @PrimaryKey val missionKey: String = "",
+    val missionKey: String = "",
+    @ColumnInfo(defaultValue = "") val observationPlaceID: String = "",
     val pipeline_type: String = "",
     val target_name: String = "",
     val target_number: String = "",
@@ -125,14 +126,14 @@ class SimpleScienceMissionJsonParser {
         isLenient = true
     }
 
-    fun parseJson(jsonString: String): List<ScienceMission> {
+    fun parseJson(jsonString: String, observationPlaceID: String): List<ScienceMission> {
         // Parse as generic JsonObject first
         val jsonObject = json.parseToJsonElement(jsonString).jsonObject
         val result = mutableListOf<ScienceMission>()
 
         jsonObject.forEach { (key, value) ->
             if (key != "query") {
-                val content = determineTypeAndParse(key, value.jsonObject)
+                val content = determineTypeAndParse(observationPlaceID, key, value.jsonObject)
                 result.add(content)
             }
         }
@@ -140,13 +141,14 @@ class SimpleScienceMissionJsonParser {
         return result
     }
 
-    private fun determineTypeAndParse(key: String, jsonObject: JsonObject): ScienceMission {
+    private fun determineTypeAndParse(observationPlaceID: String, key: String, jsonObject: JsonObject): ScienceMission {
         return try {
-            json.decodeFromJsonElement<ScienceMission>(jsonObject).copy(missionKey = key)
+            json.decodeFromJsonElement<ScienceMission>(jsonObject).copy(missionKey = key, observationPlaceID = observationPlaceID)
         } catch (e: Exception) {
             e.printStackTrace()
             ScienceMission(
-                missionKey = key
+                missionKey = key,
+                observationPlaceID = observationPlaceID
             )
         }
     }

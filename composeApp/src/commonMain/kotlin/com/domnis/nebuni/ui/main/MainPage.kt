@@ -18,10 +18,8 @@
 
 package com.domnis.nebuni.ui.main
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,15 +29,13 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -53,13 +49,13 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
@@ -79,6 +75,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.convertCurrentDateAndTimeToLocalTimeZone
+import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.missions.EmptyMissionPage
 import com.domnis.nebuni.ui.missions.MissionPage
@@ -171,6 +168,8 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
             )
         },
     ) { paddingValues ->
+        val currentObservationPlaceConfigurationState by mainViewModel.currentObservationPlaceConfigurationState
+
         ListDetailPaneScaffold(
             modifier = Modifier.padding(
                 start = paddingValues.calculateStartPadding(LocalLayoutDirection.current),
@@ -185,120 +184,159 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                     navigator.scaffoldValue[ListDetailPaneScaffoldRole.List] == PaneAdaptedValue.Expanded
                             && navigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Expanded
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.TopCenter,
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                AnimatedPane {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopCenter,
                     ) {
-                        //header card
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.LocationOn,
-                                    contentDescription = "A location icon"
-                                )
-
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                Text("${appState.currentObservationPlace.value.latitude} / ${appState.currentObservationPlace.value.longitude}")
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.DateRange,
-                                    contentDescription = "A date range icon"
-                                )
-
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                Text(
-                                    convertCurrentDateAndTimeToLocalTimeZone(startDateTime) +
-                                            " -> " +
-                                            convertCurrentDateAndTimeToLocalTimeZone(
-                                                endDateTime
-                                            )
+                            if (
+                                currentObservationPlaceConfigurationState
+                                    != MainViewModel.ObservationPlaceConfigurationState.invalid
+                                ) {
+                                //header card
+                                ListPaneHeaderCard(
+                                    currentObservationPlace = appState.currentObservationPlace.value,
+                                    startDateTime = startDateTime,
+                                    endDateTime = endDateTime,
+                                    currentObservationPlaceConfigurationState = currentObservationPlaceConfigurationState
                                 )
                             }
 
-                            HorizontalDivider()
-                        }
+                            AnimatedContent(
+                                targetState = currentObservationPlaceConfigurationState,
+                                modifier = Modifier.fillMaxSize()
+                            ) { targetState ->
+                                when (targetState) {
+                                    MainViewModel.ObservationPlaceConfigurationState.invalid ->
+                                        ListPaneInvalidPage(
+                                            isListAndDetailVisible = isListAndDetailVisible
+                                        )
 
-                        AnimatedVisibility(
-                            visible = !isLoadingMissions,
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                items(scienceMissionList) { mission ->
-                                    ScienceMissionListItem(
-                                        mission,
-                                        isSelected = selectedMission?.missionKey == mission.missionKey
-                                    ) {
-                                        mainViewModel.selectMission(mission)
+                                    MainViewModel.ObservationPlaceConfigurationState.valid -> {
+                                        if (isLoadingMissions) {
+                                            ListPaneLoadingPage()
+                                        } else {
+                                            ListPaneValidPage(
+                                                scienceMissionList,
+                                                selectedMission
+                                            ) { mission ->
+                                                mainViewModel.selectMission(mission)
 
-                                        scope.launch {
-                                            navigator.navigateTo(
-                                                ListDetailPaneScaffoldRole.Detail
-                                            )
+                                                scope.launch {
+                                                    navigator.navigateTo(
+                                                        ListDetailPaneScaffoldRole.Detail
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
+
+                                    MainViewModel.ObservationPlaceConfigurationState.loading ->
+                                        ListPaneLoadingPage()
                                 }
-
-                                item { Spacer(Modifier.height(72.dp)) }
                             }
-                        }
-                    }
-
-                    AnimatedVisibility(
-                        visible = isLoadingMissions,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        Box(
-                            Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            LoadingIndicator(
-                                modifier = Modifier.size(112.dp)
-                            )
                         }
                     }
                 }
             },
             detailPane = {
-                Surface(
-                    modifier = Modifier.padding(bottom = 16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer
-                ) {
-                    if (selectedMission == null) {
-                        EmptyMissionPage()
-                    } else {
-                        selectedMission?.let { mission ->
-                            MissionPage(
-                                mission,
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp)
-                                    .padding(top = 16.dp)
-                                    .navigationBarsPadding()
-                            )
+                AnimatedPane {
+                    Surface(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer
+                    ) {
+                        if (currentObservationPlaceConfigurationState
+                            == MainViewModel.ObservationPlaceConfigurationState.invalid
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize().padding(16.dp)//.statusBarsPadding()
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxSize()
+                                        .verticalScroll(rememberScrollState()),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Top
+                                ) {
+                                    ListPaneInvalidFormPage()
+                                }
+                            }
+                        } else if (selectedMission == null) {
+                            EmptyMissionPage()
+                        } else {
+                            selectedMission?.let { mission ->
+                                MissionPage(
+                                    mission,
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp)
+                                        .padding(top = 16.dp)
+                                        .navigationBarsPadding()
+                                )
+                            }
                         }
                     }
                 }
             }
         )
+    }
+}
+
+@Composable
+fun ListPaneHeaderCard(
+    currentObservationPlace: ObservationPlace,
+    startDateTime: String,
+    endDateTime: String,
+    modifier: Modifier = Modifier,
+    currentObservationPlaceConfigurationState: MainViewModel.ObservationPlaceConfigurationState = MainViewModel.ObservationPlaceConfigurationState.loading
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+//                                    .clickable {
+//                                        // show list of saved ObservationPlace or option to add one
+//                                    }
+//                                    .padding(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.LocationOn,
+                contentDescription = "A location icon"
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                if (currentObservationPlaceConfigurationState == MainViewModel.ObservationPlaceConfigurationState.valid)
+                    currentObservationPlace.name
+                else "???"
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Filled.DateRange,
+                contentDescription = "A date range icon"
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                convertCurrentDateAndTimeToLocalTimeZone(startDateTime) +
+                        " -> " +
+                        convertCurrentDateAndTimeToLocalTimeZone(
+                            endDateTime
+                        )
+            )
+        }
+
+        HorizontalDivider()
     }
 }
 

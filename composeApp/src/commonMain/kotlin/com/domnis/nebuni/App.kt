@@ -25,7 +25,6 @@ import androidx.navigation.compose.rememberNavController
 import com.domnis.nebuni.ui.main.MainPage
 import com.domnis.nebuni.ui.splash.SplashView
 import com.domnis.nebuni.ui.theme.NebuniTheme
-import com.domnis.nebuni.ui.welcome.WelcomePage
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinMultiplatformApplication
 import org.koin.compose.koinInject
@@ -47,20 +46,12 @@ fun App() {
             val appState: AppState = koinInject()
             val navController = rememberNavController()
 
-//            val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-//            LaunchedEffect(windowSizeClass) {
-//                appState.setWindowSizeClass(windowSizeClass)
-//            }
-
             NavHost(
                 navController = navController,
                 startDestination = appState.currentRootScreen.value.toString()
             ) {
                 composable(Screen.Splash.toString()) {
                     SplashView()
-                }
-                composable(Screen.Welcome.toString()) {
-                    WelcomePage()
                 }
                 composable(Screen.Main.toString()) {
                     MainPage()

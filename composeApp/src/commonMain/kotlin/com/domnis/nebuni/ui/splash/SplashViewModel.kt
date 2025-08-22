@@ -30,15 +30,14 @@ import kotlinx.coroutines.launch
 class SplashViewModel(val appState: AppState, val database: AppDatabase): ViewModel() {
     init {
         viewModelScope.launch(Dispatchers.Default) {
-            delay(2000)
+            delay(1000)
 
             database.getObservationPlaceDao().getAllAsFlow().collect { places ->
                 if (places.isNotEmpty()) {
                     appState.updateObservationPlace(places.first())
-                    appState.navigateTo(Screen.Main)
-                } else {
-                    appState.navigateTo(Screen.Welcome)
                 }
+
+                appState.navigateTo(Screen.Main)
             }
         }
     }

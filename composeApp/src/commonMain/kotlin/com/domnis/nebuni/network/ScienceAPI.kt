@@ -62,7 +62,7 @@ class ScienceAPI {
                 formParameters = parameters {
                     append("action", "get-science-events")
                     append("date", startDateTime) // start date?
-                    append("pipeline", "o,e,c,p") // type of science events => o = occultation, c = comet, e = exoplanet, p = planetary defense
+                    append("pipeline", "o,e") // type of science events => o = occultation, c = comet, e = exoplanet, p = planetary defense
                     append("lat", "${observationPlace.latitude}")
                     append("long", "${observationPlace.longitude}")
                     append("tend", endDateTime) // end date for fetch?
@@ -81,6 +81,6 @@ class ScienceAPI {
 
         val parser = SimpleScienceMissionJsonParser()
 
-        return parser.parseJson(response.body())
+        return parser.parseJson(response.body(), observationPlace.id)
     }
 }

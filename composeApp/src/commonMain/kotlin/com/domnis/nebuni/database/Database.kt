@@ -26,6 +26,7 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import kotlinx.coroutines.Dispatchers
@@ -34,12 +35,13 @@ import kotlinx.coroutines.IO
 internal const val DB_FILE_NAME = "nebuni.db"
 
 @Database(
-    version = 2,
+    version = 3,
     entities = [ObservationPlace::class, ScienceMission::class],
     exportSchema = true,
     autoMigrations = [
-        AutoMigration(1, 2)
-    ]
+        AutoMigration(1, 2),
+        AutoMigration(2, 3),
+    ],
 )
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -59,6 +61,7 @@ fun getRoomDatabase(
 ): AppDatabase {
     return builder
         .addMigrations()
+        .fallbackToDestructiveMigration(false)
         .fallbackToDestructiveMigrationOnDowngrade(
             dropAllTables = true
         )

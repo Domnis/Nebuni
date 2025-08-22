@@ -33,12 +33,12 @@ interface ScienceMissionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<ScienceMission>)
 
-    @Query("DELETE FROM ScienceMission")
-    suspend fun clearAll()
+    @Query("DELETE FROM ScienceMission WHERE observationPlaceID = :observationPlaceID")
+    suspend fun clearAll(observationPlaceID: String)
 
-    @Query("SELECT count(*) FROM ScienceMission")
-    suspend fun count(): Int
+    @Query("SELECT count(*) FROM ScienceMission WHERE observationPlaceID = :observationPlaceID")
+    suspend fun count(observationPlaceID: String): Int
 
-    @Query("SELECT * FROM ScienceMission")
-    fun getAllAsFlow(): Flow<List<ScienceMission>>
+    @Query("SELECT * FROM ScienceMission WHERE observationPlaceID = :observationPlaceID")
+    fun getAllAsFlow(observationPlaceID: String): Flow<List<ScienceMission>>
 }
