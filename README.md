@@ -50,8 +50,8 @@ The first feature will be to fetch science missions, storing them locally for of
 </p>
 
 <p align="center">
-  <a href="misc/pictures/screenshots/iPadOS/screenshot_02.png">
-    <img src="misc/pictures/screenshots/iPadOS/screenshot_02.png" height="250" alt="Nebuni Screenshot iPad 2"/>
+  <a href="misc/pictures/screenshots/iPadOS/screenshot_01.png">
+    <img src="misc/pictures/screenshots/iPadOS/screenshot_01.png" height="250" alt="Nebuni Screenshot iPad 1"/>
   </a>
   <a href="misc/pictures/screenshots/iPadOS/screenshot_03.png">
     <img src="misc/pictures/screenshots/iPadOS/screenshot_03.png" height="250" alt="Nebuni Screenshot iPad 3"/>
