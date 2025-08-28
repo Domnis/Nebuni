@@ -20,6 +20,7 @@
 ## 📑 Table of Contents
 - [❓ What's Nebuni?](#-whats-nebuni)
 - [📸 Screenshots](#-screenshots)
+- [🌟 Key features](#-key-features)
 - [🚀 Release](#-release)
     - [🧪 Beta versions](#-beta-versions)
         - [🍏 iOS and iPadOS](#-ios-and-ipados)
@@ -56,6 +57,13 @@ The first feature will be to fetch science missions, storing them locally for of
     <img src="misc/pictures/screenshots/iPadOS/screenshot_03.png" height="250" alt="Nebuni Screenshot iPad 3"/>
   </a>
 </p>
+
+# 🌟 Key Features
+- Create Observation Place to customize your observing experience and find appropriate missions
+- Check every mission details before use, with date and time displayed for your timezone
+- Missions are stored locally, so they can be check offline (or connected to an Unistellar's telescope)
+- Adapt to every device and screen, from phone to tablet, full or split screen, etc... You can use it side by side with Unistellar's app!
+- Support Light and Dark theme, along to custom theme on more recents Android devices
 
 # 🚀 Release
 Nebuni will be released on Apple's App Store and Google Play Store when the real v1 will be reach.
@@ -94,7 +102,9 @@ Here are some elements to be added inside the app to have a good experience with
 - [x] Open Unistellar's app by using providing deeplink
 - [x] Save GPS coordinates for next app use
 - [x] Save API result locally for offline use
-- [ ] Add screen to configure Altitude and Azimuth range
+- [ ] Support more missions types
+- [ ] Add option to create new Observation Place
+- [ ] Add option to update and delete Observation Place
 - [ ] Add option to filter and group missions (by type, start date,...)
 
 # 📜 License

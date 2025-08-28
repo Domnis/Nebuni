@@ -169,6 +169,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
         },
     ) { paddingValues ->
         val currentObservationPlaceConfigurationState by mainViewModel.currentObservationPlaceConfigurationState
+        val currentObservationPlace by appState.currentObservationPlace
 
         ListDetailPaneScaffold(
             modifier = Modifier.padding(
@@ -198,7 +199,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                 ) {
                                 //header card
                                 ListPaneHeaderCard(
-                                    currentObservationPlace = appState.currentObservationPlace.value,
+                                    currentObservationPlace = currentObservationPlace,
                                     startDateTime = startDateTime,
                                     endDateTime = endDateTime,
                                     currentObservationPlaceConfigurationState = currentObservationPlaceConfigurationState
