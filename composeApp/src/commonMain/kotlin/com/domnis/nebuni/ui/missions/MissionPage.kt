@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -39,6 +40,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,7 +50,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.ui.theme.fontStyle_header
@@ -68,8 +69,7 @@ fun MissionPage(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 8.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(horizontal = 8.dp),
         contentAlignment = Alignment.TopStart,
     ) {
         if (mission.getMissionType() == ScienceMissionType.Unknown) {
@@ -111,23 +111,27 @@ fun DataMissionPage(
 ) {
     val missionHasEphemerisArgs = mission.ephemeris_args != null
     Column(
+        modifier = Modifier.verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (mission.priority) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            OutlinedCard(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(
-                    painter = painterResource(Res.drawable.e911_emergency),
-                    contentDescription = "A priority icon"
-                )
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.e911_emergency),
+                        contentDescription = "A priority icon",
+                    )
 
-                Text(
-                    "This mission is a priority!",
-                    maxLines = 1,
-                    fontSize = 18.sp
-                )
+                    Text("This mission is a priority!")
+                }
             }
         }
 
@@ -166,6 +170,8 @@ fun DataMissionPage(
 
             HorizontalDivider()
         }
+
+        Spacer(modifier = Modifier.height(128.dp))
     }
 }
 
