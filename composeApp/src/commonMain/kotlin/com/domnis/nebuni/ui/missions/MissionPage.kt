@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -42,6 +43,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,9 +89,11 @@ fun MissionPage(
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .fillMaxWidth()
                 .heightIn(size)
-                .padding(bottom = 8.dp),
+                .padding(bottom = 16.dp),
             enabled = missionDeeplinkIsNotEmpty,
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp),
             contentPadding = ButtonDefaults.contentPaddingFor(size)
         ) {
             Icon(
@@ -100,11 +104,12 @@ fun MissionPage(
 
             Spacer(Modifier.size(ButtonDefaults.iconSpacingFor(size)))
 
-            Text("Open mission in Unistellar app", style = ButtonDefaults.textStyleFor(size))
+            Text("Open in Unistellar app", style = ButtonDefaults.textStyleFor(size))
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DataMissionPage(
     mission: ScienceMission,
@@ -171,7 +176,28 @@ fun DataMissionPage(
             HorizontalDivider()
         }
 
-        Spacer(modifier = Modifier.height(128.dp))
+        val uriHandler = LocalUriHandler.current
+        val missionEventLink = mission.getWebsiteEventLink()
+        val size = ButtonDefaults.MediumContainerHeight
+
+        TextButton(
+            onClick = {
+                if (missionEventLink != null) {
+                    uriHandler.openUri(missionEventLink)
+                }
+            },
+            modifier = Modifier.fillMaxWidth().heightIn(size),
+            enabled = !missionEventLink.isNullOrEmpty(),
+            contentPadding = ButtonDefaults.contentPaddingFor(size)
+        ) {
+            Text("Check event info on web site", style = ButtonDefaults.textStyleFor(size))
+        }
+
+        Spacer(
+            modifier = Modifier
+                .height(128.dp)
+                .navigationBarsPadding()
+        )
     }
 }
 

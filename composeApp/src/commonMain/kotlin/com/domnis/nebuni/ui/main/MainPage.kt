@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -274,7 +273,6 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     modifier = Modifier
                                         .padding(horizontal = 8.dp)
                                         .padding(top = 16.dp)
-                                        .navigationBarsPadding()
                                 )
                             }
                         }

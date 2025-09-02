@@ -106,6 +106,26 @@ data class ScienceMission(
 
         return Instant.parse(tstart, customInstantParseFormat()).toEpochMilliseconds()
     }
+
+    fun getWebsiteEventLink(): String? {
+        val missionType = getMissionType()
+
+        if (missionType == ScienceMissionType.Unknown) return null
+
+        var url = "https://science.unistellar.com/events/"
+        url += when(getMissionType()) {
+            ScienceMissionType.AsteroidOccultation -> "occultations"
+            ScienceMissionType.ExoplanetTransit -> "transits"
+            ScienceMissionType.CometaryActivity -> "comets"
+            ScienceMissionType.PlanetaryDefense -> "defenses"
+            ScienceMissionType.Satellite -> ""
+            else -> ""
+        }
+
+        url += "/$missionKey"
+
+        return url
+    }
 }
 
 @Serializable
