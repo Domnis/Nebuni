@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -187,7 +188,7 @@ fun ListPaneInvalidFormPage(
     var errorText by remember { mutableStateOf<String?>(null) }
 
     Surface(
-        modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
+        modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding(),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer
     ) {
@@ -238,7 +239,7 @@ fun ListPaneInvalidFormPage(
                     },
                     lineLimits = TextFieldLineLimits.SingleLine,
                     keyboardOptions = KeyboardOptions.Default.copy(
-                        keyboardType = KeyboardType.Number,
+                        keyboardType = KeyboardType.Ascii,
                         imeAction = ImeAction.Next
                     )
                 )
@@ -254,7 +255,7 @@ fun ListPaneInvalidFormPage(
                     },
                     lineLimits = TextFieldLineLimits.SingleLine,
                     keyboardOptions = KeyboardOptions.Default.copy(
-                        keyboardType = KeyboardType.Number,
+                        keyboardType = KeyboardType.Ascii,
                         imeAction = ImeAction.Next
                     )
                 )
