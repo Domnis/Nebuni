@@ -35,6 +35,13 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+fun getCurrentDate() : String {
+    val now = Clock.System.now()
+    val zone = TimeZone.UTC
+    return now.toLocalDateTime(zone).format(LocalDateTime.Format {
+        date(LocalDate.Formats.ISO)
+    })
+}
 fun getCurrentDateAndTime() : String {
     val now = Clock.System.now()
     val zone = TimeZone.UTC
@@ -112,5 +119,11 @@ fun customDisplayDateTimeFormat(): DateTimeFormat<LocalDateTime> {
         optional {
             char(':'); second()
         }
+    }
+}
+
+fun customDisplayDateFormat(): DateTimeFormat<LocalDateTime> {
+    return LocalDateTime.Format {
+        date(LocalDate.Formats.ISO)
     }
 }

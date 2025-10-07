@@ -26,6 +26,7 @@ import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.database.AppDatabase
+import com.domnis.nebuni.getCurrentDate
 import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.getCurrentDateAndTimeWithOffset
 import com.domnis.nebuni.repository.ScienceMissionRepository
@@ -44,7 +45,7 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
 
     var currentObservationPlaceConfigurationState = mutableStateOf(ObservationPlaceConfigurationState.loading)
     var isLoadingMissions = mutableStateOf(false)
-    var scienceMissionList = mutableStateOf(emptyList<ScienceMission>())
+    var scienceMissionList = mutableStateOf(arrayListOf<Pair<String, List<ScienceMission>>>())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
 
     var startTime = mutableStateOf(getCurrentDateAndTime())
@@ -64,8 +65,34 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                             .getScienceMissionFor(appState.currentObservationPlace.value)
                             .collect { missions ->
                                 //sort missions by date for now
-                                scienceMissionList.value =
-                                    missions.sortedBy { it.getMissionStartTimestamp() }
+                                var today = getCurrentDate()
+                                var currentDate = ""
+                                var currentList = arrayListOf<ScienceMission>()
+                                var result = arrayListOf<Pair<String, List<ScienceMission>>>()
+                                missions.sortedBy { it.getMissionStartTimestamp() }
+                                    .forEach {
+                                        val startDate = it.getMissionStartDateOnly()
+                                        if (startDate != currentDate) {
+                                            if (currentDate.isNotEmpty() && currentList.isNotEmpty()) {
+                                                val sectionTitle = if (currentDate == today) {
+                                                    "Today ($currentDate)"
+                                                } else currentDate
+
+                                                result.add(Pair(sectionTitle, currentList))
+                                            }
+
+                                            currentDate = startDate
+                                            currentList = arrayListOf<ScienceMission>()
+                                        }
+
+                                        currentList.add(it)
+                                    }
+
+                                if (currentDate.isNotEmpty() && currentList.isNotEmpty()) {
+                                    result.add(Pair(currentDate, currentList))
+                                }
+
+                                scienceMissionList.value = result
                             }
                     }
                 }

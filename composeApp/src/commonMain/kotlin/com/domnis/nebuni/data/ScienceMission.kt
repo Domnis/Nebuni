@@ -21,6 +21,7 @@ package com.domnis.nebuni.data
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
+import com.domnis.nebuni.customDisplayDateFormat
 import com.domnis.nebuni.customDisplayDateTimeFormat
 import com.domnis.nebuni.customInstantParseFormat
 import com.domnis.nebuni.parseDateToInstant
@@ -82,6 +83,14 @@ data class ScienceMission(
             "s" -> ScienceMissionType.Satellite
             else -> ScienceMissionType.Unknown
         }
+    }
+
+    fun getMissionStartDateOnly() : String {
+        if (!tstart.contains('T', true)) return tstart
+
+        return Instant.parse(tstart, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateFormat())
     }
 
     fun getMissionStartDate() : String {

@@ -87,7 +87,7 @@ fun ListPaneLoadingPage() {
 
 @Composable
 fun ListPaneValidPage(
-    scienceMissionList: List<ScienceMission>,
+    scienceMissionList: ArrayList<Pair<String, List<ScienceMission>>>,
     selectedMission: ScienceMission? = null,
     onMissionSelected: (ScienceMission) -> Unit
 ) {
@@ -95,12 +95,23 @@ fun ListPaneValidPage(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(scienceMissionList) { mission ->
-            ScienceMissionListItem(
-                mission,
-                isSelected = selectedMission?.missionKey == mission.missionKey
-            ) {
-                onMissionSelected(mission)
+        scienceMissionList.forEach { section ->
+            item {
+                Text(
+                    section.first,
+                    modifier = Modifier.padding(top = 12.dp),
+                    maxLines = 1,
+                    style = fontStyle_header
+                )
+            }
+
+            items(section.second) { mission ->
+                ScienceMissionListItem(
+                    mission,
+                    isSelected = selectedMission?.missionKey == mission.missionKey
+                ) {
+                    onMissionSelected(mission)
+                }
             }
         }
 
