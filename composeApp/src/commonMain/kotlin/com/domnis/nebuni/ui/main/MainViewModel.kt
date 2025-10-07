@@ -75,7 +75,7 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                                         if (startDate != currentDate) {
                                             if (currentDate.isNotEmpty() && currentList.isNotEmpty()) {
                                                 val sectionTitle = if (currentDate == today) {
-                                                    "Today ($currentDate)"
+                                                    "Today"// ($currentDate)"
                                                 } else currentDate
 
                                                 result.add(Pair(sectionTitle, currentList))

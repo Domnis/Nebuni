@@ -18,8 +18,6 @@
 
 package com.domnis.nebuni
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -31,19 +29,23 @@ import kotlinx.datetime.format.DateTimeFormat
 import kotlinx.datetime.format.alternativeParsing
 import kotlinx.datetime.format.char
 import kotlinx.datetime.format.optional
+import kotlinx.datetime.parse
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
 
+@OptIn(ExperimentalTime::class)
 fun getCurrentDate() : String {
-    val now = Clock.System.now()
+    val now = kotlin.time.Clock.System.now()
     val zone = TimeZone.UTC
     return now.toLocalDateTime(zone).format(LocalDateTime.Format {
         date(LocalDate.Formats.ISO)
     })
 }
+@OptIn(ExperimentalTime::class)
 fun getCurrentDateAndTime() : String {
-    val now = Clock.System.now()
+    val now = kotlin.time.Clock.System.now()
     val zone = TimeZone.UTC
     return now.toLocalDateTime(zone).format(LocalDateTime.Format {
         date(LocalDate.Formats.ISO)
@@ -52,8 +54,9 @@ fun getCurrentDateAndTime() : String {
     })
 }
 
+@OptIn(ExperimentalTime::class)
 fun getCurrentDateAndTimeWithOffset(offsetInDay: Int) : String {
-    val now = Clock.System.now().plus(offsetInDay.toDuration(DurationUnit.DAYS))
+    val now = kotlin.time.Clock.System.now().plus(offsetInDay.toDuration(DurationUnit.DAYS))
     val zone = TimeZone.UTC
     return now.toLocalDateTime(zone).format(LocalDateTime.Format {
         date(LocalDate.Formats.ISO)
@@ -62,8 +65,9 @@ fun getCurrentDateAndTimeWithOffset(offsetInDay: Int) : String {
     })
 }
 
+@OptIn(ExperimentalTime::class)
 fun convertCurrentDateAndTimeToLocalTimeZone(currentDateAndTime: String): String {
-    return Instant.parse(
+    return kotlin.time.Instant.parse(
         currentDateAndTime,
         Format {
             date(LocalDate.Formats.ISO)
@@ -103,10 +107,11 @@ fun customInstantParseFormat(): DateTimeFormat<DateTimeComponents> {
     }
 }
 
+@OptIn(ExperimentalTime::class)
 fun parseDateToInstant(
     dateString: String,
     timeZone: TimeZone = TimeZone.UTC
-): Instant { //use to parse "YYYY-MM-DD" date format
+): kotlin.time.Instant { //use to parse "YYYY-MM-DD" date format
     val localDate = LocalDate.parse(dateString)
     return localDate.atStartOfDayIn(timeZone)
 }

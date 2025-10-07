@@ -28,12 +28,14 @@ import com.domnis.nebuni.parseDateToInstant
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
+import kotlinx.datetime.parse
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
+import kotlin.time.ExperimentalTime
 
 enum class ScienceMissionType(val displayName: String) {
     AsteroidOccultation("Asteroid occultations"),
@@ -85,30 +87,34 @@ data class ScienceMission(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun getMissionStartDateOnly() : String {
         if (!tstart.contains('T', true)) return tstart
 
-        return Instant.parse(tstart, customInstantParseFormat())
+        return kotlin.time.Instant.parse(tstart, customInstantParseFormat())
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(customDisplayDateFormat())
     }
 
+    @OptIn(ExperimentalTime::class)
     fun getMissionStartDate() : String {
         if (!tstart.contains('T', true)) return tstart
 
-        return Instant.parse(tstart, customInstantParseFormat())
+        return kotlin.time.Instant.parse(tstart, customInstantParseFormat())
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(customDisplayDateTimeFormat())
     }
 
+    @OptIn(ExperimentalTime::class)
     fun getMissionEndDate() : String {
         if (!tend.contains('T', true)) return tend
 
-        return Instant.parse(tend, customInstantParseFormat())
+        return kotlin.time.Instant.parse(tend, customInstantParseFormat())
             .toLocalDateTime(TimeZone.currentSystemDefault())
             .format(customDisplayDateTimeFormat())
     }
 
+    @OptIn(ExperimentalTime::class)
     fun getMissionStartTimestamp(): Long {
         if (!tstart.contains('T', true))
             return parseDateToInstant(tstart, TimeZone.currentSystemDefault()).toEpochMilliseconds()
