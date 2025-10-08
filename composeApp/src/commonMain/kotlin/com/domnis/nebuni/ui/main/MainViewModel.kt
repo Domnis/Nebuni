@@ -54,6 +54,13 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
     private val scienceMissionRepository = ScienceMissionRepository(database)
     private var missionJob: Job? = null
 
+    private fun getSection(today: String, sectionDate: String, sectionItems: ArrayList<ScienceMission>): Pair<String, List<ScienceMission>>? {
+        if (sectionDate.isEmpty() ||  sectionItems.isEmpty()) return null
+
+        val sectionTitle = if (sectionDate == today) "Today" else sectionDate
+        return Pair(sectionTitle, sectionItems)
+    }
+
     init {
         viewModelScope.launch {
             snapshotFlow { appState.currentObservationPlace.value }
@@ -73,12 +80,8 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                                     .forEach {
                                         val startDate = it.getMissionStartDateOnly()
                                         if (startDate != currentDate) {
-                                            if (currentDate.isNotEmpty() && currentList.isNotEmpty()) {
-                                                val sectionTitle = if (currentDate == today) {
-                                                    "Today"// ($currentDate)"
-                                                } else currentDate
-
-                                                result.add(Pair(sectionTitle, currentList))
+                                            getSection(today, currentDate, currentList)?.let { section ->
+                                                result.add(section)
                                             }
 
                                             currentDate = startDate
@@ -88,8 +91,8 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                                         currentList.add(it)
                                     }
 
-                                if (currentDate.isNotEmpty() && currentList.isNotEmpty()) {
-                                    result.add(Pair(currentDate, currentList))
+                                getSection(today, currentDate, currentList)?.let { section ->
+                                    result.add(section)
                                 }
 
                                 scienceMissionList.value = result

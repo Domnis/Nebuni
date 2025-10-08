@@ -38,8 +38,8 @@ fun App() {
     KoinMultiplatformApplication(config = koinConfiguration {
         modules(
             platformModule(),
+            databaseModule,
             appModule,
-            databaseModule
         )
     }) {
         NebuniTheme {
