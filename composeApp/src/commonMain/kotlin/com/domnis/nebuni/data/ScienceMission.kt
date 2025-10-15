@@ -25,7 +25,6 @@ import com.domnis.nebuni.customDisplayDateFormat
 import com.domnis.nebuni.customDisplayDateTimeFormat
 import com.domnis.nebuni.customInstantParseFormat
 import com.domnis.nebuni.parseDateToInstant
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.parse
@@ -117,9 +116,9 @@ data class ScienceMission(
     @OptIn(ExperimentalTime::class)
     fun getMissionStartTimestamp(): Long {
         if (!tstart.contains('T', true))
-            return parseDateToInstant(tstart, TimeZone.currentSystemDefault()).toEpochMilliseconds()
+            return parseDateToInstant(tstart).toEpochMilliseconds()
 
-        return Instant.parse(tstart, customInstantParseFormat()).toEpochMilliseconds()
+        return kotlin.time.Instant.parse(tstart, customInstantParseFormat()).toEpochMilliseconds()
     }
 
     fun getWebsiteEventLink(): String? {
@@ -137,7 +136,22 @@ data class ScienceMission(
             else -> ""
         }
 
-        url += "/$missionKey"
+        url += when(getMissionType()) {
+            ScienceMissionType.AsteroidOccultation -> "/$missionKey"
+            ScienceMissionType.ExoplanetTransit -> "/$missionKey"
+            ScienceMissionType.CometaryActivity -> "/${
+                ephemeris_args?.name?.
+                replace(" ", "")?.
+                replace("/", "")
+            }"
+            ScienceMissionType.PlanetaryDefense -> "/${
+                ephemeris_args?.name?.
+                replace(" ", "")?.
+                replace("/", "")
+            }"
+            ScienceMissionType.Satellite -> ""
+            else -> ""
+        }
 
         return url
     }
@@ -154,6 +168,33 @@ data class EphemerisArgs(
     val exp_time: String = "",
     val is_comet: String? = "false"
 )
+
+@Serializable
+@Entity(primaryKeys = ["missionKey", "observationPlaceID", "timestamp"])
+data class EphemerisData(
+    val missionKey: String = "",
+    @ColumnInfo(defaultValue = "") val observationPlaceID: String = "",
+    val target_name: String = "",
+    val timestamp: Long = 0L,
+    val date: String = "",
+    val ra: String = "",
+    val dec: String = "",
+    val ra_hms: String = "",
+    val dec_dms: String = "",
+    val alt: Int = 0,
+    val az: Int = 0,
+    val is_visible: Boolean = false,
+    val deeplink: String = ""
+) {
+    @OptIn(ExperimentalTime::class)
+    fun getParsedDate() : String {
+        if (!date.contains('T', true)) return date
+
+        return kotlin.time.Instant.parse(date, customInstantParseFormat())
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .format(customDisplayDateTimeFormat())
+    }
+}
 
 class SimpleScienceMissionJsonParser {
     private val json = Json {
@@ -186,5 +227,38 @@ class SimpleScienceMissionJsonParser {
                 observationPlaceID = observationPlaceID
             )
         }
+    }
+}
+
+class SimpleCometEphemeridsJsonParser {
+    private val json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
+
+    @OptIn(ExperimentalTime::class)
+    fun parseJson(jsonString: String, missionKey: String, observationPlaceID: String): List<EphemerisData> {
+        // Parse as generic JsonObject first
+        val jsonObject = json.parseToJsonElement(jsonString).jsonObject
+        val result = mutableListOf<EphemerisData>()
+
+        jsonObject.forEach { (key, value) ->
+            if (key != "loc" && value is JsonObject) {
+                try {
+                    val content =  json.decodeFromJsonElement<EphemerisData>(value)
+                        .copy(
+                            missionKey = missionKey,
+                            observationPlaceID = observationPlaceID,
+                            date = key,
+                            timestamp = kotlin.time.Instant.parse(key, customInstantParseFormat()).toEpochMilliseconds()
+                        )
+                    result.add(content)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
+        return result
     }
 }

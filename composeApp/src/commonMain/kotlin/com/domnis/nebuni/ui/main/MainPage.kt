@@ -37,7 +37,6 @@ import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CardDefaults
@@ -73,7 +72,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
-import com.domnis.nebuni.convertCurrentDateAndTimeToLocalTimeZone
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.missions.EmptyMissionPage
@@ -316,24 +314,24 @@ fun ListPaneHeaderCard(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.Filled.DateRange,
-                contentDescription = "A date range icon"
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Text(
-                convertCurrentDateAndTimeToLocalTimeZone(startDateTime) +
-                        " -> " +
-                        convertCurrentDateAndTimeToLocalTimeZone(
-                            endDateTime
-                        )
-            )
-        }
+//        Row(
+//            modifier = Modifier.fillMaxWidth()
+//        ) {
+//            Icon(
+//                imageVector = Icons.Filled.DateRange,
+//                contentDescription = "A date range icon"
+//            )
+//
+//            Spacer(modifier = Modifier.width(8.dp))
+//
+//            Text(
+//                convertCurrentDateAndTimeToLocalTimeZone(startDateTime) +
+//                        " -> " +
+//                        convertCurrentDateAndTimeToLocalTimeZone(
+//                            endDateTime
+//                        )
+//            )
+//        }
 
         HorizontalDivider()
     }

@@ -31,20 +31,27 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,16 +59,26 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.domnis.nebuni.data.EphemerisData
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
+import com.domnis.nebuni.database.AppDatabase
+import com.domnis.nebuni.repository.ScienceMissionRepository
 import com.domnis.nebuni.ui.theme.fontStyle_header
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.e911_emergency
 import nebuni.composeapp.generated.resources.nebuni
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalTime::class)
 @Composable
 @Preview
 fun MissionPage(
@@ -74,18 +91,45 @@ fun MissionPage(
             .padding(horizontal = 8.dp),
         contentAlignment = Alignment.TopStart,
     ) {
+        var cometEphemerisData by remember { mutableStateOf(listOf<EphemerisData>()) }
+        var isLoadingCometData by remember { mutableStateOf(false) }
+        val appDatabase: AppDatabase = koinInject()
+
+        LaunchedEffect(mission.getMissionType() == ScienceMissionType.CometaryActivity) {
+            isLoadingCometData = true
+            coroutineScope {
+                async(Dispatchers.IO) {
+                    cometEphemerisData =
+                        ScienceMissionRepository(appDatabase).getCometEphemerisData(
+                            cometScienceMission = mission
+                        )
+                    isLoadingCometData = false
+                }
+            }
+        }
+
         if (mission.getMissionType() == ScienceMissionType.Unknown) {
             Spacer(modifier = Modifier.height(12.dp))
         } else {
-            DataMissionPage(mission)
+            DataMissionPage(mission, cometEphemerisData)
         }
 
         val uriHandler = LocalUriHandler.current
-        val missionDeeplinkIsNotEmpty = mission.deeplink.isNotEmpty()
+        val missionDeeplinkIsNotEmpty = mission.deeplink.isNotEmpty() || cometEphemerisData.isNotEmpty()
         val size = ButtonDefaults.MediumContainerHeight
         Button(
             onClick = {
-                uriHandler.openUri(mission.deeplink)
+                if (mission.deeplink.isNotEmpty()) {
+                    uriHandler.openUri(mission.deeplink)
+                } else {
+                    val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                    val firstAfter = cometEphemerisData.indexOfFirst { it.timestamp > now }
+                    if (firstAfter >= 0) {
+                        val deeplink = if (firstAfter == 0) cometEphemerisData.first().deeplink
+                            else cometEphemerisData[firstAfter - 1].deeplink
+                        uriHandler.openUri(deeplink)
+                    }
+                }
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -96,108 +140,158 @@ fun MissionPage(
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp),
             contentPadding = ButtonDefaults.contentPaddingFor(size)
         ) {
-            Icon(
-                Icons.AutoMirrored.Filled.ExitToApp,
-                contentDescription = "Open in external app's icon",
-                modifier = Modifier.size(ButtonDefaults.iconSizeFor(size))
-            )
+            if (isLoadingCometData) {
+                LoadingIndicator(modifier = Modifier.size(ButtonDefaults.iconSizeFor(size)))
+            } else {
+                Icon(
+                    Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Open in external app's icon",
+                    modifier = Modifier.size(ButtonDefaults.iconSizeFor(size))
+                )
 
-            Spacer(Modifier.size(ButtonDefaults.iconSpacingFor(size)))
+                Spacer(Modifier.size(ButtonDefaults.iconSpacingFor(size)))
 
-            Text("Open in Unistellar app", style = ButtonDefaults.textStyleFor(size))
+                Text("Open in Unistellar app", style = ButtonDefaults.textStyleFor(size))
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, DelicateCoroutinesApi::class)
 @Composable
 fun DataMissionPage(
     mission: ScienceMission,
+    ephemerisData: List<EphemerisData>
 ) {
     val missionHasEphemerisArgs = mission.ephemeris_args != null
-    Column(
-        modifier = Modifier.verticalScroll(rememberScrollState()),
+    LazyColumn (
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (mission.priority) {
-            OutlinedCard(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+            item {
+                OutlinedCard(
+                    onClick = {},
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.e911_emergency),
-                        contentDescription = "A priority icon",
-                    )
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.e911_emergency),
+                            contentDescription = "A priority icon",
+                        )
 
-                    Text("This mission is a priority!")
+                        Text("This mission is a priority!")
+                    }
                 }
             }
         }
 
-        Column {
-            Text("Mission type: ${mission.getMissionType().displayName}")
-            Text("Target: ${mission.target_name}")
-        }
-
-        HorizontalDivider()
-
-        Column {
-            Text("Date and duration:", style = fontStyle_header)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("From: ${mission.getMissionStartDate()}")
-            Text("To: ${mission.getMissionEndDate()}")
-            if (!missionHasEphemerisArgs) {
-                Text("Duration: ${mission.duration}")
-            }
-        }
-
-        HorizontalDivider()
-
-        if (!missionHasEphemerisArgs) {
+        item {
             Column {
-                Text("Position:", style = fontStyle_header)
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text("RA: ${mission.ra_hms} (${mission.ra})")
-                Text("Dec: ${mission.dec_dms} (${mission.dec})")
-                Text("Alt/Az: ${mission.alt}° / ${mission.az}° (${mission.cardinal_direction})")
-                Text("Constellation: ${mission.constellation}")
+                Text("Mission type: ${mission.getMissionType().displayName}")
+                Text("Target: ${mission.target_name}")
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             HorizontalDivider()
         }
 
-        val uriHandler = LocalUriHandler.current
-        val missionEventLink = mission.getWebsiteEventLink()
-        val size = ButtonDefaults.MediumContainerHeight
+        item {
+            Column {
+                Text("Date and duration:", style = fontStyle_header)
 
-        TextButton(
-            onClick = {
-                if (missionEventLink != null) {
-                    uriHandler.openUri(missionEventLink)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text("From: ${mission.getMissionStartDate()}")
+                Text("To: ${mission.getMissionEndDate()}")
+                if (!missionHasEphemerisArgs) {
+                    Text("Duration: ${mission.duration}")
                 }
-            },
-            modifier = Modifier.fillMaxWidth().heightIn(size),
-            enabled = !missionEventLink.isNullOrEmpty(),
-            contentPadding = ButtonDefaults.contentPaddingFor(size)
-        ) {
-            Text("Check event info on web site", style = ButtonDefaults.textStyleFor(size))
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            HorizontalDivider()
         }
 
-        Spacer(
-            modifier = Modifier
-                .height(128.dp)
-                .navigationBarsPadding()
-        )
+        if (!missionHasEphemerisArgs) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Text("Position:", style = fontStyle_header)
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text("RA: ${mission.ra_hms} (${mission.ra})")
+                        Text("Dec: ${mission.dec_dms} (${mission.dec})")
+                        Text("Alt/Az: ${mission.alt}° / ${mission.az}° (${mission.cardinal_direction})")
+                        Text("Constellation: ${mission.constellation}")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                HorizontalDivider()
+            }
+        } else if (ephemerisData.isNotEmpty()) {
+            items(ephemerisData) {
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Text("Position at ${it.getParsedDate()}:", style = fontStyle_header)
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text("RA: ${it.ra_hms} (${it.ra})")
+                        Text("Dec: ${it.dec_dms} (${it.dec})")
+                        Text("Alt/Az: ${it.alt}° / ${it.az}°")
+                    }
+                }
+            }
+
+            item {
+                HorizontalDivider()
+            }
+        }
+
+        item {
+            val uriHandler = LocalUriHandler.current
+            val missionEventLink = mission.getWebsiteEventLink()
+            val size = ButtonDefaults.MediumContainerHeight
+
+            TextButton(
+                onClick = {
+                    if (missionEventLink != null) {
+                        uriHandler.openUri(missionEventLink)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().heightIn(size),
+                enabled = !missionEventLink.isNullOrEmpty(),
+                contentPadding = ButtonDefaults.contentPaddingFor(size)
+            ) {
+                Text("Check event info on web site", style = ButtonDefaults.textStyleFor(size))
+            }
+        }
+
+        item {
+            Spacer(
+                modifier = Modifier
+                    .height(128.dp)
+                    .navigationBarsPadding()
+            )
+        }
     }
 }
 

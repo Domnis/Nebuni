@@ -36,10 +36,11 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
 
 @OptIn(ExperimentalTime::class)
-fun getCurrentDate() : String {
+fun getCurrentDate(
+    timeZone: TimeZone = TimeZone.UTC
+) : String {
     val now = kotlin.time.Clock.System.now()
-    val zone = TimeZone.UTC
-    return now.toLocalDateTime(zone).format(LocalDateTime.Format {
+    return now.toLocalDateTime(timeZone).format(LocalDateTime.Format {
         date(LocalDate.Formats.ISO)
     })
 }

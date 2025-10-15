@@ -23,8 +23,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domnis.nebuni.AppState
+import com.domnis.nebuni.customInstantParseFormat
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.getCurrentDate
 import com.domnis.nebuni.getCurrentDateAndTime
@@ -35,7 +37,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.parse
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class MainViewModel(var appState: AppState, val database: AppDatabase): ViewModel() {
     enum class ObservationPlaceConfigurationState {
         loading,
@@ -55,7 +61,7 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
     private var missionJob: Job? = null
 
     private fun getSection(today: String, sectionDate: String, sectionItems: ArrayList<ScienceMission>): Pair<String, List<ScienceMission>>? {
-        if (sectionDate.isEmpty() ||  sectionItems.isEmpty()) return null
+        if (sectionDate.isEmpty() || sectionItems.isEmpty()) return null
 
         val sectionTitle = if (sectionDate == today) "Today" else sectionDate
         return Pair(sectionTitle, sectionItems)
@@ -72,15 +78,46 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                             .getScienceMissionFor(appState.currentObservationPlace.value)
                             .collect { missions ->
                                 //sort missions by date for now
-                                var today = getCurrentDate()
+                                var today = getCurrentDate(TimeZone.currentSystemDefault())
+                                var todayNearMidnight = "${today}T18:00:00"
+                                val todayEpochMilliseconds = kotlin.time.Instant.parse(
+                                    todayNearMidnight,
+                                    customInstantParseFormat()
+                                ).toEpochMilliseconds()
+                                val nowEpochMilliseconds = kotlin.time.Clock.System.now().toEpochMilliseconds()
+
                                 var currentDate = ""
                                 var currentList = arrayListOf<ScienceMission>()
                                 var result = arrayListOf<Pair<String, List<ScienceMission>>>()
-                                missions.sortedBy { it.getMissionStartTimestamp() }
+                                missions
+                                    .sortedBy {
+                                        it.getMissionStartTimestamp()
+                                    }
+//                                    .sortedBy {
+//                                        val missionTimestamp = it.getMissionStartTimestamp()
+//                                        if (
+//                                            it.getMissionType() != ScienceMissionType.CometaryActivity
+//                                            || missionTimestamp > nowEpochMilliseconds
+//                                            ) {
+//                                            missionTimestamp
+//                                        } else {
+//                                            nowEpochMilliseconds
+//                                        }
+//                                    }
                                     .forEach {
-                                        val startDate = it.getMissionStartDateOnly()
+                                        val missionTimestamp = it.getMissionStartTimestamp()
+                                        val startDate = if (
+                                            it.getMissionType() != ScienceMissionType.CometaryActivity
+                                            || missionTimestamp > nowEpochMilliseconds
+                                            ) {
+                                            it.getMissionStartDateOnly()
+                                        } else today
+
                                         if (startDate != currentDate) {
-                                            getSection(today, currentDate, currentList)?.let { section ->
+                                            getSection(
+                                                today,
+                                                currentDate,
+                                                currentList)?.let { section ->
                                                 result.add(section)
                                             }
 
@@ -91,7 +128,10 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                                         currentList.add(it)
                                     }
 
-                                getSection(today, currentDate, currentList)?.let { section ->
+                                getSection(
+                                    today,
+                                    currentDate,
+                                    currentList)?.let { section ->
                                     result.add(section)
                                 }
 
@@ -123,21 +163,42 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
     fun refreshScienceMissions() {
         isLoadingMissions.value = true
 
-        val newStartTime = getCurrentDateAndTime()
-        val newEndTime = getCurrentDateAndTimeWithOffset(12)
-
-        startTime.value = newStartTime
-        endTime.value = newEndTime
-
         viewModelScope.launch(Dispatchers.Default) {
+            // first call need to be sync to clean up database if needed
+            val newStartTime = getCurrentDateAndTimeWithOffset(0)
+            val newEndTime = getCurrentDateAndTimeWithOffset(0 + 2)
+
             scienceMissionRepository.refreshScienceMissions(
                 appState.currentObservationPlace.value,
                 newStartTime,
-                newEndTime
+                newEndTime,
+                true
             )
 
+            //update UI to notify end of loading state
             launch(Dispatchers.Main) {
                 isLoadingMissions.value = false
+            }
+
+            // get next chunk of data 3 days by 3 days
+            val maxIteration = 3
+            for (i in 1..maxIteration) {
+                //2 because only 3 day of asteroids occultation data per request
+                val dayOffset = i + 2 * i //2 because only 3 day of asteroids occultation data per request
+                val newStartTime = getCurrentDateAndTimeWithOffset(dayOffset)
+                val newEndTime = getCurrentDateAndTimeWithOffset(dayOffset + 2)
+
+                viewModelScope.launch(Dispatchers.Default) {
+                    scienceMissionRepository.refreshScienceMissions(
+                        appState.currentObservationPlace.value,
+                        newStartTime,
+                        newEndTime
+                    )
+
+                    launch(Dispatchers.Main) {
+                        isLoadingMissions.value = false
+                    }
+                }
             }
         }
     }
