@@ -87,7 +87,8 @@ class ScienceAPI {
     }
 
     suspend fun getCometMissionsEphemeris(
-        scienceMission: ScienceMission
+        scienceMission: ScienceMission,
+        fromStartDateTime: String
     ): List<EphemerisData> {
         val args = scienceMission.ephemeris_args
         if (args == null) {
@@ -100,7 +101,7 @@ class ScienceAPI {
                 formParameters = parameters {
                     append("action", "get-ephemerid")
                     append("name", args.name)
-                    append("date", args.tstart)
+                    append("date", fromStartDateTime.ifEmpty { args.tstart })
                     append("lat", args.loc.split(",")[0])
                     append("lng", args.loc.split(",")[1])
                     append("step", "10")

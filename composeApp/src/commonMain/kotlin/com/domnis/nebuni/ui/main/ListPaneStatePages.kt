@@ -95,6 +95,10 @@ fun ListPaneValidPage(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        item {
+            Spacer(modifier = Modifier.height(2.dp))
+        }
+
         scienceMissionList.forEach { section ->
             item {
                 Text(

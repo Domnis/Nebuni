@@ -45,13 +45,16 @@ fun getCurrentDate(
     })
 }
 @OptIn(ExperimentalTime::class)
-fun getCurrentDateAndTime() : String {
+fun getCurrentDateAndTime(withSecond: Boolean = false) : String {
     val now = kotlin.time.Clock.System.now()
     val zone = TimeZone.UTC
     return now.toLocalDateTime(zone).format(LocalDateTime.Format {
         date(LocalDate.Formats.ISO)
         char('T')
         hour(); char(':'); minute()
+        if (withSecond) {
+            char(':'); second()
+        }
     })
 }
 

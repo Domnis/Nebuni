@@ -187,9 +187,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.TopCenter,
                     ) {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
+                        Column {
                             if (
                                 currentObservationPlaceConfigurationState
                                     != MainViewModel.ObservationPlaceConfigurationState.invalid

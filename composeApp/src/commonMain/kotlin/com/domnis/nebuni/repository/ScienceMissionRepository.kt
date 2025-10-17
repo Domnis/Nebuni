@@ -23,6 +23,7 @@ import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.database.AppDatabase
+import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.network.ScienceAPI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,7 @@ class ScienceMissionRepository(private val database: AppDatabase) {
         startTime: String,
         endDate: String,
         canCleanDatabase: Boolean = false
-    ) {
+    ) : Boolean {
         val scienceAPI = ScienceAPI()
         val apiResult = scienceAPI.listScienceMissions(
             observationPlace = observationPlace,
@@ -74,6 +75,9 @@ class ScienceMissionRepository(private val database: AppDatabase) {
                     }
                 }
         }
+
+        // return true if API call is succeed
+        return apiResult.isNotEmpty()
     }
 
     @OptIn(ExperimentalTime::class)
@@ -100,7 +104,8 @@ class ScienceMissionRepository(private val database: AppDatabase) {
         // get new data from API
         val scienceAPI = ScienceAPI()
         val apiResult = scienceAPI.getCometMissionsEphemeris(
-            scienceMission = cometScienceMission
+            scienceMission = cometScienceMission,
+            fromStartDateTime = getCurrentDateAndTime(true)
         )
 
         if (apiResult.isNotEmpty()) {

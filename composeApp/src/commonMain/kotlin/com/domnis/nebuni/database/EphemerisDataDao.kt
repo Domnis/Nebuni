@@ -35,6 +35,11 @@ interface EphemerisDataDao {
     @Query("DELETE FROM EphemerisData WHERE missionKey NOT IN (:missionKeys) AND observationPlaceID = :observationPlaceID")
     suspend fun clearEphemerisData(missionKeys: List<String>, observationPlaceID: String)
 
-    @Query("SELECT * FROM EphemerisData WHERE missionKey = :missionKey AND observationPlaceID = :observationPlaceID AND timestamp > :timestamp")
+    @Query("SELECT * FROM EphemerisData " +
+            "WHERE missionKey = :missionKey " +
+            "AND observationPlaceID = :observationPlaceID " +
+            "AND timestamp >= :timestamp " +
+            "AND timestamp <= :timestamp + 36000000" //36 000 000 for 10 hours in milliseconds
+    )
     suspend fun getAllEphemerisData(missionKey: String, observationPlaceID: String, timestamp: Long): List<EphemerisData>
 }

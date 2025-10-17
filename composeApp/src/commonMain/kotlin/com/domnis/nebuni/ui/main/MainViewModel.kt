@@ -166,9 +166,9 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
         viewModelScope.launch(Dispatchers.Default) {
             // first call need to be sync to clean up database if needed
             val newStartTime = getCurrentDateAndTimeWithOffset(0)
-            val newEndTime = getCurrentDateAndTimeWithOffset(0 + 2)
+            val newEndTime = getCurrentDateAndTimeWithOffset(2)
 
-            scienceMissionRepository.refreshScienceMissions(
+            val isSucceed = scienceMissionRepository.refreshScienceMissions(
                 appState.currentObservationPlace.value,
                 newStartTime,
                 newEndTime,
@@ -180,23 +180,26 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                 isLoadingMissions.value = false
             }
 
-            // get next chunk of data 3 days by 3 days
-            val maxIteration = 3
-            for (i in 1..maxIteration) {
-                //2 because only 3 day of asteroids occultation data per request
-                val dayOffset = i + 2 * i //2 because only 3 day of asteroids occultation data per request
-                val newStartTime = getCurrentDateAndTimeWithOffset(dayOffset)
-                val newEndTime = getCurrentDateAndTimeWithOffset(dayOffset + 2)
+            if (isSucceed) { // if first call is success, perform next calls
+                // get next chunk of data 3 days by 3 days
+                val maxIteration = 3
+                for (i in 1..maxIteration) {
+                    //2 because only 3 day of asteroids occultation data per request
+                    val dayOffset =
+                        i + 2 * i //2 because only 3 day of asteroids occultation data per request
+                    val newStartTime = getCurrentDateAndTimeWithOffset(dayOffset)
+                    val newEndTime = getCurrentDateAndTimeWithOffset(dayOffset + 2)
 
-                viewModelScope.launch(Dispatchers.Default) {
-                    scienceMissionRepository.refreshScienceMissions(
-                        appState.currentObservationPlace.value,
-                        newStartTime,
-                        newEndTime
-                    )
+                    viewModelScope.launch(Dispatchers.Default) {
+                        scienceMissionRepository.refreshScienceMissions(
+                            appState.currentObservationPlace.value,
+                            newStartTime,
+                            newEndTime
+                        )
 
-                    launch(Dispatchers.Main) {
-                        isLoadingMissions.value = false
+                        launch(Dispatchers.Main) {
+                            isLoadingMissions.value = false
+                        }
                     }
                 }
             }
