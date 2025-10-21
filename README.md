@@ -28,6 +28,7 @@
 - [💡 Why Nebuni?](#-why-nebuni)
 - [🐇 No, I mean... WHY Nebuni? Why this name?](#-no-i-mean-why-nebuni-why-this-name)
 - [🗺️ Roadmap](#-roadmap)
+- [❤️ How to support?](#-how-to-support)
 - [📜 License](#-license)
 
 # ❓ What's Nebuni?
@@ -106,6 +107,15 @@ Here are some elements to be added inside the app to have a good experience with
 - [ ] Add option to create new Observation Place
 - [ ] Add option to update and delete Observation Place
 - [ ] Add option to filter and group missions (by type, start date,...)
+
+<a id="-how-to-support"></a>
+# ❤️ How to support?
+If you like Nebuni and want to support its development:
+
+- ⭐ **Star the repository** on GitHub if you have an account — it really helps!
+- ☕ **Buy me a coffee** on Ko-Fi to help me keep improving the app 
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Q5Q01MUU1I)
 
 # 📜 License
 Copyright (C) 2025 Sylvain
