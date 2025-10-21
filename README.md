@@ -108,6 +108,7 @@ Here are some elements to be added inside the app to have a good experience with
 - [ ] Add option to update and delete Observation Place
 - [ ] Add option to filter and group missions (by type, start date,...)
 
+<a id="-how-to-support"></a>
 # ❤️ How to support?
 If you like Nebuni and want to support its development:
 
