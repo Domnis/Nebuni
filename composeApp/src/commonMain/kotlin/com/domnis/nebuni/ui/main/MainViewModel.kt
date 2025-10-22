@@ -107,7 +107,8 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                                     .forEach {
                                         val missionTimestamp = it.getMissionStartTimestamp()
                                         val startDate = if (
-                                            it.getMissionType() != ScienceMissionType.CometaryActivity
+                                            (it.getMissionType() != ScienceMissionType.CometaryActivity
+                                                    && it.getMissionType() != ScienceMissionType.PlanetaryDefense)
                                             || missionTimestamp > nowEpochMilliseconds
                                             ) {
                                             it.getMissionStartDateOnly()

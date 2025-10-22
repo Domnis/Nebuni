@@ -230,7 +230,7 @@ class SimpleScienceMissionJsonParser {
     }
 }
 
-class SimpleCometEphemeridsJsonParser {
+class SimpleEphemeridsJsonParser {
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
