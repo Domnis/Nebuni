@@ -68,10 +68,15 @@ class ScienceMissionRepository(private val database: AppDatabase) {
                 )
 
             // get all comet data async if needed
-            apiResult.filter { it.getMissionType() == ScienceMissionType.CometaryActivity }
+            apiResult.filter { it.getMissionType() == ScienceMissionType.CometaryActivity || it.getMissionType() == ScienceMissionType.PlanetaryDefense }
                 .map {
                     CoroutineScope(Dispatchers.IO).async {
-                        getCometEphemerisData(it)
+                        if (it.getMissionType() == ScienceMissionType.CometaryActivity) {
+                            getCometEphemerisData(it)
+                        } else {
+                            // should be PlanetaryDefense type
+                            getPlanetaryDefenseData(it)
+                        }
                     }
                 }
         }
@@ -105,6 +110,42 @@ class ScienceMissionRepository(private val database: AppDatabase) {
         val scienceAPI = ScienceAPI()
         val apiResult = scienceAPI.getCometMissionsEphemeris(
             scienceMission = cometScienceMission,
+            fromStartDateTime = getCurrentDateAndTime(true)
+        )
+
+        if (apiResult.isNotEmpty()) {
+            // insert new data in DB if any
+            ephemerisDao.insertAll(apiResult)
+        }
+
+        return apiResult
+    }
+
+    @OptIn(ExperimentalTime::class)
+    suspend fun getPlanetaryDefenseData(
+        planetaryDefenseScienceMission: ScienceMission
+    ) : List<EphemerisData> {
+        val start = kotlin.time.Clock.System.now()
+        val ephemerisDao = database.getEphemerisDataDao()
+
+        val result = ephemerisDao.getAllEphemerisData(
+            missionKey = planetaryDefenseScienceMission.missionKey,
+            observationPlaceID = planetaryDefenseScienceMission.observationPlaceID,
+            timestamp = start.toEpochMilliseconds()
+        )
+
+        if (result.isNotEmpty()) return result
+
+        // no result => clear old data if any
+        ephemerisDao.clearAll(
+            planetaryDefenseScienceMission.missionKey,
+            planetaryDefenseScienceMission.observationPlaceID
+        )
+
+        // get new data from API
+        val scienceAPI = ScienceAPI()
+        val apiResult = scienceAPI.getPlanetaryDefenseMissionsEphemeris(
+            scienceMission = planetaryDefenseScienceMission,
             fromStartDateTime = getCurrentDateAndTime(true)
         )
 

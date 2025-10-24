@@ -91,19 +91,26 @@ fun MissionPage(
             .padding(horizontal = 8.dp),
         contentAlignment = Alignment.TopStart,
     ) {
-        var cometEphemerisData by remember { mutableStateOf(listOf<EphemerisData>()) }
-        var isLoadingCometData by remember { mutableStateOf(false) }
+        var missionEphemerisData by remember { mutableStateOf(listOf<EphemerisData>()) }
+        var isLoadingEphemerisData by remember { mutableStateOf(false) }
         val appDatabase: AppDatabase = koinInject()
 
-        LaunchedEffect(mission.getMissionType() == ScienceMissionType.CometaryActivity) {
-            isLoadingCometData = true
+        LaunchedEffect(mission.getMissionType() == ScienceMissionType.CometaryActivity
+                || mission.getMissionType() == ScienceMissionType.PlanetaryDefense
+        ) {
+            isLoadingEphemerisData = true
             coroutineScope {
                 async(Dispatchers.IO) {
-                    cometEphemerisData =
+                    missionEphemerisData = if (mission.getMissionType() == ScienceMissionType.CometaryActivity) {
                         ScienceMissionRepository(appDatabase).getCometEphemerisData(
                             cometScienceMission = mission
                         )
-                    isLoadingCometData = false
+                    } else {
+                        ScienceMissionRepository(appDatabase).getPlanetaryDefenseData(
+                            planetaryDefenseScienceMission = mission
+                        )
+                    }
+                    isLoadingEphemerisData = false
                 }
             }
         }
@@ -111,11 +118,11 @@ fun MissionPage(
         if (mission.getMissionType() == ScienceMissionType.Unknown) {
             Spacer(modifier = Modifier.height(12.dp))
         } else {
-            DataMissionPage(mission, cometEphemerisData)
+            DataMissionPage(mission, missionEphemerisData)
         }
 
         val uriHandler = LocalUriHandler.current
-        val missionDeeplinkIsNotEmpty = mission.deeplink.isNotEmpty() || cometEphemerisData.isNotEmpty()
+        val missionDeeplinkIsNotEmpty = mission.deeplink.isNotEmpty() || missionEphemerisData.isNotEmpty()
         val size = ButtonDefaults.MediumContainerHeight
         Button(
             onClick = {
@@ -123,10 +130,10 @@ fun MissionPage(
                     uriHandler.openUri(mission.deeplink)
                 } else {
                     val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
-                    val firstAfter = cometEphemerisData.indexOfFirst { it.timestamp > now }
+                    val firstAfter = missionEphemerisData.indexOfFirst { it.timestamp > now }
                     if (firstAfter >= 0) {
-                        val deeplink = if (firstAfter == 0) cometEphemerisData.first().deeplink
-                            else cometEphemerisData[firstAfter - 1].deeplink
+                        val deeplink = if (firstAfter == 0) missionEphemerisData.first().deeplink
+                            else missionEphemerisData[firstAfter - 1].deeplink
                         uriHandler.openUri(deeplink)
                     }
                 }
@@ -140,7 +147,7 @@ fun MissionPage(
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp),
             contentPadding = ButtonDefaults.contentPaddingFor(size)
         ) {
-            if (isLoadingCometData) {
+            if (isLoadingEphemerisData) {
                 LoadingIndicator(modifier = Modifier.size(ButtonDefaults.iconSizeFor(size)))
             } else {
                 Icon(

@@ -21,7 +21,7 @@ package com.domnis.nebuni.network
 import com.domnis.nebuni.data.EphemerisData
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
-import com.domnis.nebuni.data.SimpleCometEphemeridsJsonParser
+import com.domnis.nebuni.data.SimpleEphemeridsJsonParser
 import com.domnis.nebuni.data.SimpleScienceMissionJsonParser
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -64,7 +64,7 @@ class ScienceAPI {
                 formParameters = parameters {
                     append("action", "get-science-events")
                     append("date", startDateTime) // start date?
-                    append("pipeline", "o,e,c") // type of science events => o = occultation, c = comet, e = exoplanet, p = planetary defense
+                    append("pipeline", "o,e,c,p") // type of science events => o = occultation, c = comet, e = exoplanet, p = planetary defense
                     append("lat", "${observationPlace.latitude}")
                     append("long", "${observationPlace.longitude}")
                     append("tend", endDateTime) // end date for fetch?
@@ -121,7 +121,51 @@ class ScienceAPI {
             return emptyList()
         }
 
-        val parser = SimpleCometEphemeridsJsonParser()
+        val parser = SimpleEphemeridsJsonParser()
+
+        return parser.parseJson(
+            response.body(),
+            scienceMission.missionKey,
+            scienceMission.observationPlaceID
+        )
+    }
+
+    suspend fun getPlanetaryDefenseMissionsEphemeris(
+        scienceMission: ScienceMission,
+        fromStartDateTime: String
+    ): List<EphemerisData> {
+        val args = scienceMission.ephemeris_args
+        if (args == null) {
+            return emptyList()
+        }
+
+        val response = try {
+            httpClient.submitForm(
+                "https://science.unistellar.com/wp-admin/admin-ajax.php",
+                formParameters = parameters {
+                    append("action", "get-ephemerid")
+                    append("name", args.name)
+                    append("date", fromStartDateTime.ifEmpty { args.tstart })
+                    append("lat", args.loc.split(",")[0])
+                    append("lng", args.loc.split(",")[1])
+                    append("step", "60")
+                    append("duration", args.duration.split(".")[0])
+                    append("et", args.exp_time.split(".")[0])
+                    append("gain", args.gain.split(".")[0])
+                    append("is_comet", "false")
+                }
+            )
+        } catch(e: Exception) {
+            e.printStackTrace()
+            null
+        }
+
+        if (response == null || response.status != HttpStatusCode.OK) {
+            print("comet eph no response or bad response: ${response?.status}")
+            return emptyList()
+        }
+
+        val parser = SimpleEphemeridsJsonParser()
 
         return parser.parseJson(
             response.body(),
