@@ -142,7 +142,8 @@ fun MissionPage(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .heightIn(size)
-                .padding(bottom = 16.dp),
+                .padding(bottom = 16.dp)
+                .navigationBarsPadding(),
             enabled = missionDeeplinkIsNotEmpty,
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp),
             contentPadding = ButtonDefaults.contentPaddingFor(size)
