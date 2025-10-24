@@ -93,17 +93,19 @@ fun ListPaneValidPage(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         item {
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(10.dp))
         }
 
         scienceMissionList.forEach { section ->
-            item {
+            stickyHeader {
                 Text(
                     section.first,
-                    modifier = Modifier.padding(top = 12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(top = 20.dp, bottom = 8.dp),
                     maxLines = 1,
                     style = fontStyle_header
                 )
@@ -112,6 +114,7 @@ fun ListPaneValidPage(
             items(section.second) { mission ->
                 ScienceMissionListItem(
                     mission,
+                    modifier = Modifier.padding(bottom = 8.dp),
                     isSelected = selectedMission?.missionKey == mission.missionKey
                 ) {
                     onMissionSelected(mission)
