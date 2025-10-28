@@ -38,12 +38,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -149,18 +147,19 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                     }
                 },
                 actions = {
-                    if (isListAndDetailVisible || selectedMission == null) {
-                        FilledIconButton(
-                            onClick = {
-                                mainViewModel.refreshScienceMissions()
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Refresh,
-                                contentDescription = "A refresh icon"
-                            )
-                        }
-                    }
+                    // Will be replaced by a settings button or something
+//                    if (isListAndDetailVisible || selectedMission == null) {
+//                        FilledIconButton(
+//                            onClick = {
+//                                mainViewModel.refreshScienceMissions()
+//                            },
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Filled.Refresh,
+//                                contentDescription = "A refresh icon"
+//                            )
+//                        }
+//                    }
                 }
             )
         },
@@ -212,12 +211,16 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                         )
 
                                     MainViewModel.ObservationPlaceConfigurationState.valid -> {
-                                        if (isLoadingMissions) {
-                                            ListPaneLoadingPage()
-                                        } else {
+//                                        if (isLoadingMissions) {
+//                                            ListPaneLoadingPage()
+//                                        } else {
                                             ListPaneValidPage(
                                                 scienceMissionList,
-                                                selectedMission
+                                                isLoadingMissions = isLoadingMissions,
+                                                selectedMission = selectedMission,
+                                                onRefresh = {
+                                                    mainViewModel.refreshScienceMissions()
+                                                }
                                             ) { mission ->
                                                 mainViewModel.selectMission(mission)
 
@@ -227,7 +230,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                                     )
                                                 }
                                             }
-                                        }
+//                                        }
                                     }
 
                                     MainViewModel.ObservationPlaceConfigurationState.loading ->

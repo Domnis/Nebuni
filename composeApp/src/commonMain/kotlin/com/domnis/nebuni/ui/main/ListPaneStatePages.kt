@@ -55,6 +55,9 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,44 +88,61 @@ fun ListPaneLoadingPage() {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ListPaneValidPage(
     scienceMissionList: ArrayList<Pair<String, List<ScienceMission>>>,
+    isLoadingMissions: Boolean,
     selectedMission: ScienceMission? = null,
+    onRefresh: () -> Unit,
     onMissionSelected: (ScienceMission) -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        item {
-            Spacer(modifier = Modifier.height(10.dp))
+    val pullToRefreshState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = isLoadingMissions,
+        onRefresh = onRefresh,
+        state = pullToRefreshState,
+        indicator = {
+            PullToRefreshDefaults.LoadingIndicator(
+                state = pullToRefreshState,
+                isRefreshing = isLoadingMissions,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
         }
-
-        scienceMissionList.forEach { section ->
-            stickyHeader {
-                Text(
-                    section.first,
-                    modifier = Modifier.fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(top = 20.dp, bottom = 8.dp),
-                    maxLines = 1,
-                    style = fontStyle_header
-                )
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
             }
 
-            items(section.second) { mission ->
-                ScienceMissionListItem(
-                    mission,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    isSelected = selectedMission?.missionKey == mission.missionKey
-                ) {
-                    onMissionSelected(mission)
+            scienceMissionList.forEach { section ->
+                stickyHeader {
+                    Text(
+                        section.first,
+                        modifier = Modifier.fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(top = 20.dp, bottom = 8.dp),
+                        maxLines = 1,
+                        style = fontStyle_header
+                    )
+                }
+
+                items(section.second) { mission ->
+                    ScienceMissionListItem(
+                        mission,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                        isSelected = selectedMission?.missionKey == mission.missionKey
+                    ) {
+                        onMissionSelected(mission)
+                    }
                 }
             }
-        }
 
-        item { Spacer(Modifier.height(72.dp)) }
+            item { Spacer(Modifier.height(72.dp)) }
+        }
     }
 }
 
