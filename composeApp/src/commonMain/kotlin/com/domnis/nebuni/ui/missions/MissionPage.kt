@@ -95,22 +95,27 @@ fun MissionPage(
         var isLoadingEphemerisData by remember { mutableStateOf(false) }
         val appDatabase: AppDatabase = koinInject()
 
-        LaunchedEffect(mission.getMissionType() == ScienceMissionType.CometaryActivity
+        LaunchedEffect(mission) {
+            if (
+                mission.getMissionType() == ScienceMissionType.CometaryActivity
                 || mission.getMissionType() == ScienceMissionType.PlanetaryDefense
-        ) {
-            isLoadingEphemerisData = true
-            coroutineScope {
-                async(Dispatchers.IO) {
-                    missionEphemerisData = if (mission.getMissionType() == ScienceMissionType.CometaryActivity) {
-                        ScienceMissionRepository(appDatabase).getCometEphemerisData(
-                            cometScienceMission = mission
-                        )
-                    } else {
-                        ScienceMissionRepository(appDatabase).getPlanetaryDefenseData(
-                            planetaryDefenseScienceMission = mission
-                        )
+            ) {
+                isLoadingEphemerisData = true
+                missionEphemerisData = listOf()
+                coroutineScope {
+                    async(Dispatchers.IO) {
+                        missionEphemerisData =
+                            if (mission.getMissionType() == ScienceMissionType.CometaryActivity) {
+                                ScienceMissionRepository(appDatabase).getCometEphemerisData(
+                                    cometScienceMission = mission
+                                )
+                            } else {
+                                ScienceMissionRepository(appDatabase).getPlanetaryDefenseData(
+                                    planetaryDefenseScienceMission = mission
+                                )
+                            }
+                        isLoadingEphemerisData = false
                     }
-                    isLoadingEphemerisData = false
                 }
             }
         }
