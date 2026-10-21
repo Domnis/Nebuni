@@ -22,7 +22,6 @@ kotlin {
     }
     
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -129,7 +128,6 @@ dependencies {
     listOf(
         "kspAndroid",
         "kspIosArm64",
-        "kspIosX64",
         "kspIosSimulatorArm64",
         "kspDesktop" //"kspDesktop" here because we define jvm target like "jvm("desktop")" in "kotlin{}" part, just above
     ).forEach {
