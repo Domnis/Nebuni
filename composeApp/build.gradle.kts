@@ -1,11 +1,9 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
@@ -14,14 +12,16 @@ plugins {
     alias(libs.plugins.room)
 }
 
-// Shared with iosApp/Configuration/Config.xcconfig: the single source of the app version.
-val appVersion = Properties().apply {
-    rootProject.file("version.properties").inputStream().use { load(it) }
-}
-
 kotlin {
-    androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    android {
+        namespace = "com.domnis.nebuni.shared"
+        compileSdk = libs.versions.android.compileSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+
+        withHostTest {}
+        androidResources {
+            enable = true
+        }
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
@@ -44,8 +44,6 @@ kotlin {
         val desktopMain by getting
         
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.koin.android)
@@ -100,36 +98,7 @@ kotlin {
     }
 }
 
-android {
-    namespace = "com.domnis.nebuni"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "com.domnis.nebuni"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = appVersion.getProperty("APP_VERSION_CODE").toInt()
-        versionName = appVersion.getProperty("APP_VERSION_NAME")
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-
 dependencies {
-    debugImplementation(compose.uiTooling)
-
     // KSP support for Room Compiler.
     listOf(
         "kspAndroid",
