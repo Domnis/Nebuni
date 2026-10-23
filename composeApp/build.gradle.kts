@@ -158,6 +158,11 @@ compose.desktop {
     }
 }
 
+compose.resources {
+    // Pinned so the generated Res package does not depend on the module name or Android plugin.
+    packageOfResClass = "nebuni.composeapp.generated.resources"
+}
+
 room {
     schemaDirectory("$projectDir/schemas")
 }
