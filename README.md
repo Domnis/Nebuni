@@ -22,6 +22,7 @@
 - [📸 Screenshots](#-screenshots)
 - [🌟 Key features](#-key-features)
 - [🚀 Release](#-release)
+    - [📦 Release procedure](#-release-procedure)
     - [🧪 Beta versions](#-beta-versions)
         - [🍏 iOS and iPadOS](#-ios-and-ipados)
         - [🤖 Android phone and tablet](#-android-phone-and-tablet)
@@ -68,6 +69,11 @@ The first feature will be to fetch science missions, storing them locally for of
 
 # 🚀 Release
 Nebuni will be released on Apple's App Store and Google Play Store when the real v1 will be reach.
+
+## 📦 Release procedure
+- **Version**: bump it by editing the root `version.properties` only. `APP_VERSION_CODE` is the build number on Android and iOS, `APP_VERSION_NAME` is the version name. Desktop keeps its own `packageVersion` in `composeApp/build.gradle.kts`.
+- **Android**: in Android Studio, use *Build > Generate Signed App Bundle / APK* and pick the `androidApp` module. The keystore is kept outside the repository and is never committed. The bundle is generated at `androidApp/build/outputs/bundle/release/androidApp-release.aab`.
+- **iOS**: archive from Xcode as usual. The version comes from `version.properties` through `iosApp/Configuration/Config.xcconfig`.
 
 ## 🧪 Beta versions
 ### 🍎 iOS and iPadOS
