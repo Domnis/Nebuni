@@ -1,6 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -11,6 +12,11 @@ plugins {
     alias(libs.plugins.kotlinxSerialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+}
+
+// Shared with iosApp/Configuration/Config.xcconfig: the single source of the app version.
+val appVersion = Properties().apply {
+    rootProject.file("version.properties").inputStream().use { load(it) }
 }
 
 kotlin {
@@ -102,8 +108,8 @@ android {
         applicationId = "com.domnis.nebuni"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 13
-        versionName = "1.0.0"
+        versionCode = appVersion.getProperty("APP_VERSION_CODE").toInt()
+        versionName = appVersion.getProperty("APP_VERSION_NAME")
     }
     packaging {
         resources {
