@@ -25,6 +25,7 @@
     - [🧪 Beta versions](#-beta-versions)
         - [🍏 iOS and iPadOS](#-ios-and-ipados)
         - [🤖 Android phone and tablet](#-android-phone-and-tablet)
+    - [📦 Release procedure](#-release-procedure)
 - [💡 Why Nebuni?](#-why-nebuni)
 - [🐇 No, I mean... WHY Nebuni? Why this name?](#-no-i-mean-why-nebuni-why-this-name)
 - [🗺️ Roadmap](#-roadmap)
@@ -75,6 +76,13 @@ For iOS users, go to this [link](https://testflight.apple.com/join/NMbXYvmA), fo
 
 ### 🤖 Android phone and tablet
 For Android users, go to this [link](https://play.google.com/store/apps/details?id=com.domnis.nebuni), accept conditions if needed and install the beta version of Nebuni's app! 🐰
+
+## 📦 Release procedure
+To build a release yourself:
+
+- **Version**: bump it by editing the root `version.properties` only. `APP_VERSION_CODE` is the build number on Android and iOS, `APP_VERSION_NAME` is the version name. Desktop keeps its own `packageVersion` in `composeApp/build.gradle.kts`.
+- **Android**: build as usual (*Build > Generate Signed App Bundle / APK* in Android Studio) but pick the `androidApp` module. The bundle is generated at `androidApp/build/outputs/bundle/release/androidApp-release.aab`.
+- **iOS**: archive from Xcode as usual. The version comes from `version.properties` through `iosApp/Configuration/Config.xcconfig`.
 
 # 💡 Why Nebuni?
 I'm a user of Unistellar's telescope and one thing I missed to do more science is a tool to help me find missions, especially when I'm connected to my telescope, without internet access.
