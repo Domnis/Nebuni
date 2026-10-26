@@ -25,10 +25,12 @@ import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.network.ScienceAPI
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.ExperimentalTime
 
@@ -67,87 +69,67 @@ class ScienceMissionRepository(private val database: AppDatabase) {
                     observationPlace.id
                 )
 
-            // get all comet data async if needed
-            apiResult.filter { it.getMissionType() == ScienceMissionType.CometaryActivity || it.getMissionType() == ScienceMissionType.PlanetaryDefense }
-                .map {
-                    CoroutineScope(Dispatchers.IO).async {
-                        if (it.getMissionType() == ScienceMissionType.CometaryActivity) {
-                            getCometEphemerisData(it)
-                        } else {
-                            // should be PlanetaryDefense type
-                            getPlanetaryDefenseData(it)
+            // fetch ephemeris data concurrently, tied to this call: a failure on one mission
+            // must not cancel the others nor fail the refresh
+            coroutineScope {
+                apiResult.filter {
+                    it.getMissionType() == ScienceMissionType.CometaryActivity ||
+                        it.getMissionType() == ScienceMissionType.PlanetaryDefense
+                }.map { mission ->
+                    async(Dispatchers.IO) {
+                        try {
+                            if (mission.getMissionType() == ScienceMissionType.CometaryActivity) {
+                                getCometEphemerisData(mission)
+                            } else {
+                                getPlanetaryDefenseData(mission)
+                            }
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            println("Ephemeris fetch failed for mission ${mission.missionKey}: $e")
                         }
                     }
-                }
+                }.awaitAll()
+            }
         }
 
         // return true if API call is succeed
         return apiResult.isNotEmpty()
     }
 
-    @OptIn(ExperimentalTime::class)
     suspend fun getCometEphemerisData(
         cometScienceMission: ScienceMission
-    ) : List<EphemerisData> {
-        val start = kotlin.time.Clock.System.now()
-        val ephemerisDao = database.getEphemerisDataDao()
+    ) : List<EphemerisData> = getEphemerisData(cometScienceMission) { mission, from ->
+        ScienceAPI().getCometMissionsEphemeris(scienceMission = mission, fromStartDateTime = from)
+    }
 
-        val result = ephemerisDao.getAllEphemerisData(
-            missionKey = cometScienceMission.missionKey,
-            observationPlaceID = cometScienceMission.observationPlaceID,
-            timestamp = start.toEpochMilliseconds()
-        )
-
-        if (result.isNotEmpty()) return result
-
-        // no result => clear old data if any
-        ephemerisDao.clearAll(
-            cometScienceMission.missionKey,
-            cometScienceMission.observationPlaceID
-        )
-
-        // get new data from API
-        val scienceAPI = ScienceAPI()
-        val apiResult = scienceAPI.getCometMissionsEphemeris(
-            scienceMission = cometScienceMission,
-            fromStartDateTime = getCurrentDateAndTime(true)
-        )
-
-        if (apiResult.isNotEmpty()) {
-            // insert new data in DB if any
-            ephemerisDao.insertAll(apiResult)
-        }
-
-        return apiResult
+    suspend fun getPlanetaryDefenseData(
+        planetaryDefenseScienceMission: ScienceMission
+    ) : List<EphemerisData> = getEphemerisData(planetaryDefenseScienceMission) { mission, from ->
+        ScienceAPI().getPlanetaryDefenseMissionsEphemeris(scienceMission = mission, fromStartDateTime = from)
     }
 
     @OptIn(ExperimentalTime::class)
-    suspend fun getPlanetaryDefenseData(
-        planetaryDefenseScienceMission: ScienceMission
+    private suspend fun getEphemerisData(
+        scienceMission: ScienceMission,
+        fetchFromApi: suspend (ScienceMission, String) -> List<EphemerisData>
     ) : List<EphemerisData> {
         val start = kotlin.time.Clock.System.now()
         val ephemerisDao = database.getEphemerisDataDao()
 
         val result = ephemerisDao.getAllEphemerisData(
-            missionKey = planetaryDefenseScienceMission.missionKey,
-            observationPlaceID = planetaryDefenseScienceMission.observationPlaceID,
+            missionKey = scienceMission.missionKey,
+            observationPlaceID = scienceMission.observationPlaceID,
             timestamp = start.toEpochMilliseconds()
         )
 
         if (result.isNotEmpty()) return result
 
         // no result => clear old data if any
-        ephemerisDao.clearAll(
-            planetaryDefenseScienceMission.missionKey,
-            planetaryDefenseScienceMission.observationPlaceID
-        )
+        ephemerisDao.clearAll(scienceMission.missionKey, scienceMission.observationPlaceID)
 
         // get new data from API
-        val scienceAPI = ScienceAPI()
-        val apiResult = scienceAPI.getPlanetaryDefenseMissionsEphemeris(
-            scienceMission = planetaryDefenseScienceMission,
-            fromStartDateTime = getCurrentDateAndTime(true)
-        )
+        val apiResult = fetchFromApi(scienceMission, getCurrentDateAndTime(true))
 
         if (apiResult.isNotEmpty()) {
             // insert new data in DB if any
