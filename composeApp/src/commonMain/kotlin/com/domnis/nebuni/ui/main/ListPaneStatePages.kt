@@ -69,9 +69,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
-import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.theme.fontStyle_header
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -223,7 +223,7 @@ fun ListPaneInvalidFormPage(
     val azMinState = rememberTextFieldState(initialText = appState.currentObservationPlace.value.azMin.toString())
     val azMaxState = rememberTextFieldState(initialText = appState.currentObservationPlace.value.azMax.toString())
 
-    var errorText by remember { mutableStateOf<String?>(null) }
+    var inputError by remember { mutableStateOf<ObservationPlaceInputError?>(null) }
 
     Surface(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding().imePadding(),
@@ -377,113 +377,26 @@ fun ListPaneInvalidFormPage(
                 )
             }
 
-            if (errorText != null) {
-                Text(errorText ?: "", color = MaterialTheme.colorScheme.error)
+            inputError?.let { error ->
+                Text(stringResource(error.message), color = MaterialTheme.colorScheme.error)
             }
 
             val size = ButtonDefaults.MediumContainerHeight
             Button(
                 onClick = {
-                    //TODO: Refactor how to check data and display error
-                    val latText = latState.text.toString().trim().replace(",", ".")
-                    val lonText = lonState.text.toString().trim().replace(",", ".")
-
-                    if (latText.isEmpty() || latText.toDoubleOrNull() == null) {
-                        //TODO: show error
-                        errorText = "Latitude is in incorrect format"
-                        return@Button
-                    }
-
-                    val lat = latText.toDouble()
-                    if (lat < -90.0 || lat > 90.0) {
-                        //TODO: show error
-                        errorText = "Latitude should be between -90° and 90°"
-                        return@Button
-                    }
-
-                    if (lonText.isEmpty() || lonText.toDoubleOrNull() == null) {
-                        //TODO: show error
-                        errorText = "Longitude is in incorrect format"
-                        return@Button
-                    }
-
-                    val lon = lonText.toDouble()
-                    if (lon < -180.0 || lon > 180.0) {
-                        //TODO: show error
-                        errorText = "Longitude should be between -180° and 180°"
-                        return@Button
-                    }
-
-                    val altMinText = altMinState.text.toString().trim().replace(",", ".")
-                    val altMaxText = altMaxState.text.toString().trim().replace(",", ".")
-                    val azMinText = azMinState.text.toString().trim().replace(",", ".")
-                    val azMaxText = azMaxState.text.toString().trim().replace(",", ".")
-
-                    if (altMinText.isEmpty() || altMinText.toIntOrNull() == null) {
-                        //TODO: show error
-                        errorText = "Altitude Min is in incorrect format"
-                        return@Button
-                    }
-
-                    if (altMaxText.isEmpty() || altMaxText.toIntOrNull() == null) {
-                        //TODO: show error
-                        errorText = "Altitude Max is in incorrect format"
-                        return@Button
-                    }
-
-                    val altMin = altMinText.toInt()
-                    if (altMin < 0 || altMin > 90) {
-                        //TODO: show error
-                        errorText = "Altitude Min should be between 0° (horizon) and 90° (zenith)"
-                        return@Button
-                    }
-
-                    val altMax = altMaxText.toInt()
-                    if (altMax < 0 || altMax > 90 || altMax < altMin) {
-                        //TODO: show error
-                        errorText =
-                            "Altitude Max should be between 0° (horizon) and 90° (zenith) and bigger than Altitude Min"
-                        return@Button
-                    }
-
-                    if (azMinText.isEmpty() || azMinText.toIntOrNull() == null) {
-                        //TODO: show error
-                        errorText = "Azimuth Min is in incorrect format"
-                        return@Button
-                    }
-
-                    if (azMaxText.isEmpty() || azMaxText.toIntOrNull() == null) {
-                        //TODO: show error
-                        errorText = "Azimuth Max is in incorrect format"
-                        return@Button
-                    }
-
-                    val azMin = azMinText.toInt()
-                    if (azMin < 0 || azMin > 360) {
-                        //TODO: show error
-                        errorText = "Azimuth Min should be between 0° and 360°"
-                        return@Button
-                    }
-
-                    val azMax = azMaxText.toInt()
-                    if (azMax < 0 || azMax > 360 || azMax < azMin) {
-                        //TODO: show error
-                        errorText =
-                            "Azimuth Max should be between 0° and 360° and bigger than Azimuth Min"
-                        return@Button
-                    }
-
-                    val place = ObservationPlace(
-                        name = nameState.text.toString().trim(),
-                        latitude = lat,
-                        longitude = lon,
-                        altMin = altMin,
-                        altMax = altMax,
-                        azMin = azMin,
-                        azMax = azMax
+                    val result = validateObservationPlaceInput(
+                        name = nameState.text.toString(),
+                        latitude = latState.text.toString(),
+                        longitude = lonState.text.toString(),
+                        altMin = altMinState.text.toString(),
+                        altMax = altMaxState.text.toString(),
+                        azMin = azMinState.text.toString(),
+                        azMax = azMaxState.text.toString()
                     )
-
-                    mainViewModel.addObservationPlace(place)
+                    when (result) {
+                        is ObservationPlaceInputResult.Invalid -> inputError = result.error
+                        is ObservationPlaceInputResult.Valid -> mainViewModel.addObservationPlace(result.place)
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
