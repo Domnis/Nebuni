@@ -33,25 +33,9 @@ import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-class ScienceAPI {
-    private val httpClient = HttpClient {
-        install(HttpTimeout) {
-            connectTimeoutMillis = 30_000
-            socketTimeoutMillis = 60_000
-            requestTimeoutMillis = 70_000
-        }
-
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                useAlternativeNames = false
-                encodeDefaults = true
-                isLenient = true
-                coerceInputValues = true
-                allowSpecialFloatingPointValues = true
-            })
-        }
-    }
+class ScienceAPI(
+    private val httpClient: HttpClient = createDefaultHttpClient()
+) {
 
     suspend fun listScienceMissions(
         observationPlace: ObservationPlace,
@@ -172,5 +156,24 @@ class ScienceAPI {
             scienceMission.missionKey,
             scienceMission.observationPlaceID
         )
+    }
+}
+
+private fun createDefaultHttpClient() = HttpClient {
+    install(HttpTimeout) {
+        connectTimeoutMillis = 30_000
+        socketTimeoutMillis = 60_000
+        requestTimeoutMillis = 70_000
+    }
+
+    install(ContentNegotiation) {
+        json(Json {
+            ignoreUnknownKeys = true
+            useAlternativeNames = false
+            encodeDefaults = true
+            isLenient = true
+            coerceInputValues = true
+            allowSpecialFloatingPointValues = true
+        })
     }
 }
