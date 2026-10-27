@@ -71,6 +71,8 @@ import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.theme.fontStyle_header
+import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.section_today
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -91,7 +93,7 @@ fun ListPaneLoadingPage() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ListPaneValidPage(
-    scienceMissionList: ArrayList<Pair<String, List<ScienceMission>>>,
+    scienceMissionList: List<MissionSection>,
     isLoadingMissions: Boolean,
     selectedMission: ScienceMission? = null,
     onRefresh: () -> Unit,
@@ -121,7 +123,7 @@ fun ListPaneValidPage(
             scienceMissionList.forEach { section ->
                 stickyHeader {
                     Text(
-                        section.first,
+                        if (section.isToday) stringResource(Res.string.section_today) else section.date,
                         modifier = Modifier.fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
                             .padding(top = 20.dp, bottom = 8.dp),
@@ -130,7 +132,7 @@ fun ListPaneValidPage(
                     )
                 }
 
-                items(section.second) { mission ->
+                items(section.missions) { mission ->
                     ScienceMissionListItem(
                         mission,
                         modifier = Modifier.padding(bottom = 8.dp),

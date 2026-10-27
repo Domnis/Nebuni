@@ -1,4 +1,7 @@
 <resources>
+    <!-- Mission list section headers -->
+    <string name="section_today">Today</string>
+
     <!-- Observation place form validation errors -->
     <string name="error_latitude_format">Latitude is in incorrect format</string>
     <string name="error_latitude_range">Latitude should be between -90° and 90°</string>
