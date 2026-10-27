@@ -50,11 +50,7 @@ fun groupMissionsByDay(
     missions
         .sortedBy { it.getMissionStartTimestamp() }
         .forEach { mission ->
-            val startDate = if (isOngoingLongRunningMission(mission, nowEpochMillis)) {
-                today
-            } else {
-                mission.getMissionStartDateOnly()
-            }
+            val startDate = missionSectionDate(mission, today, nowEpochMillis)
 
             if (startDate != currentDate) {
                 closeSection()
@@ -69,6 +65,17 @@ fun groupMissionsByDay(
 
     return result
 }
+
+/**
+ * Local start date (ISO `YYYY-MM-DD`) under which [mission] is listed: [today] for ongoing
+ * comet and planetary defense missions, its own local start date otherwise.
+ */
+internal fun missionSectionDate(mission: ScienceMission, today: String, nowEpochMillis: Long): String =
+    if (isOngoingLongRunningMission(mission, nowEpochMillis)) {
+        today
+    } else {
+        mission.getMissionStartDateOnly()
+    }
 
 private fun isOngoingLongRunningMission(mission: ScienceMission, nowEpochMillis: Long): Boolean {
     val type = mission.getMissionType()

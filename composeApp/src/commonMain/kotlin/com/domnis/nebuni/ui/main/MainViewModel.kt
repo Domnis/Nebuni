@@ -77,10 +77,12 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                             }
                             .collect { (missions, filter) ->
                                 availableTypes.value = countMissionTypes(missions)
+                                val today = getCurrentDate(TimeZone.currentSystemDefault())
+                                val nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
                                 scienceMissionList.value = groupMissionsByDay(
-                                    filterMissions(missions, filter),
-                                    today = getCurrentDate(TimeZone.currentSystemDefault()),
-                                    nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                                    filterMissions(missions, filter, today, nowEpochMillis),
+                                    today = today,
+                                    nowEpochMillis = nowEpochMillis
                                 )
                             }
                     }
@@ -168,6 +170,14 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
 
     fun toggleType(type: ScienceMissionType) {
         filter.value = filter.value.toggle(type)
+    }
+
+    fun togglePriorityOnly() {
+        filter.value = filter.value.copy(priorityOnly = !filter.value.priorityOnly)
+    }
+
+    fun selectDateRange(dateRange: DateRange) {
+        filter.value = filter.value.copy(dateRange = dateRange)
     }
 
     fun clearFilters() {
