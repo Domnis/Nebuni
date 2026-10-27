@@ -1,0 +1,15 @@
+<resources>
+    <!-- Observation place form validation errors -->
+    <string name="error_latitude_format">Latitude is in incorrect format</string>
+    <string name="error_latitude_range">Latitude should be between -90° and 90°</string>
+    <string name="error_longitude_format">Longitude is in incorrect format</string>
+    <string name="error_longitude_range">Longitude should be between -180° and 180°</string>
+    <string name="error_altitude_min_format">Altitude Min is in incorrect format</string>
+    <string name="error_altitude_max_format">Altitude Max is in incorrect format</string>
+    <string name="error_altitude_min_range">Altitude Min should be between 0° (horizon) and 90° (zenith)</string>
+    <string name="error_altitude_max_range">Altitude Max should be between 0° (horizon) and 90° (zenith) and bigger than Altitude Min</string>
+    <string name="error_azimuth_min_format">Azimuth Min is in incorrect format</string>
+    <string name="error_azimuth_max_format">Azimuth Max is in incorrect format</string>
+    <string name="error_azimuth_min_range">Azimuth Min should be between 0° and 360°</string>
+    <string name="error_azimuth_max_range">Azimuth Max should be between 0° and 360° and bigger than Azimuth Min</string>
+</resources>
