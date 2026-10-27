@@ -72,6 +72,8 @@ import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.filter_clear
+import nebuni.composeapp.generated.resources.filter_no_matching_mission
 import nebuni.composeapp.generated.resources.section_today
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -96,6 +98,8 @@ fun ListPaneValidPage(
     scienceMissionList: List<MissionSection>,
     isLoadingMissions: Boolean,
     selectedMission: ScienceMission? = null,
+    isFilterResultEmpty: Boolean = false,
+    onClearFilters: () -> Unit = {},
     onRefresh: () -> Unit,
     onMissionSelected: (ScienceMission) -> Unit
 ) {
@@ -118,6 +122,23 @@ fun ListPaneValidPage(
         ) {
             item {
                 Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            if (isFilterResultEmpty) {
+                // Kept inside the list so pull-to-refresh still works
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(stringResource(Res.string.filter_no_matching_mission))
+
+                        Button(onClick = onClearFilters) {
+                            Text(stringResource(Res.string.filter_clear))
+                        }
+                    }
+                }
             }
 
             scienceMissionList.forEach { section ->
