@@ -25,6 +25,7 @@ import androidx.lifecycle.viewModelScope
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.getCurrentDate
 import com.domnis.nebuni.getCurrentDateAndTime
@@ -32,6 +33,7 @@ import com.domnis.nebuni.getCurrentDateAndTimeWithOffset
 import com.domnis.nebuni.repository.ScienceMissionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -55,6 +57,10 @@ class MainViewModel(
     var scienceMissionList = mutableStateOf<List<MissionSection>>(emptyList())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
 
+    // In memory only: kept by the ViewModel across configuration changes, not persisted.
+    var filter = mutableStateOf(MissionFilter())
+    var availableTypes = mutableStateOf<List<MissionTypeCount>>(emptyList())
+
     var startTime = mutableStateOf(getCurrentDateAndTime())
     var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
 
@@ -69,11 +75,17 @@ class MainViewModel(
                     missionJob = viewModelScope.launch {
                         scienceMissionRepository
                             .getScienceMissionFor(appState.currentObservationPlace.value)
-                            .collect { missions ->
+                            .combine(snapshotFlow { filter.value }) { missions, filter ->
+                                missions to filter
+                            }
+                            .collect { (missions, filter) ->
+                                availableTypes.value = countMissionTypes(missions)
+                                val today = getCurrentDate(TimeZone.currentSystemDefault())
+                                val nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
                                 scienceMissionList.value = groupMissionsByDay(
-                                    missions,
-                                    today = getCurrentDate(TimeZone.currentSystemDefault()),
-                                    nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                                    filterMissions(missions, filter, today, nowEpochMillis),
+                                    today = today,
+                                    nowEpochMillis = nowEpochMillis
                                 )
                             }
                     }
@@ -157,5 +169,21 @@ class MainViewModel(
 
     fun unselectMission() {
         selectedMission.value = null
+    }
+
+    fun toggleType(type: ScienceMissionType) {
+        filter.value = filter.value.toggle(type)
+    }
+
+    fun togglePriorityOnly() {
+        filter.value = filter.value.copy(priorityOnly = !filter.value.priorityOnly)
+    }
+
+    fun selectDateRange(dateRange: DateRange) {
+        filter.value = filter.value.copy(dateRange = dateRange)
+    }
+
+    fun clearFilters() {
+        filter.value = MissionFilter()
     }
 }
