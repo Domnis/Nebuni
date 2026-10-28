@@ -39,7 +39,11 @@ import kotlinx.datetime.TimeZone
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
-class MainViewModel(var appState: AppState, val database: AppDatabase): ViewModel() {
+class MainViewModel(
+    var appState: AppState,
+    val database: AppDatabase,
+    private val scienceMissionRepository: ScienceMissionRepository
+): ViewModel() {
     enum class ObservationPlaceConfigurationState {
         loading,
         invalid,
@@ -54,7 +58,6 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
     var startTime = mutableStateOf(getCurrentDateAndTime())
     var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
 
-    private val scienceMissionRepository = ScienceMissionRepository(database)
     private var missionJob: Job? = null
 
     init {
