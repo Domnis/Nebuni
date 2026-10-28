@@ -4,8 +4,6 @@ import com.domnis.nebuni.data.EphemerisArgs
 import com.domnis.nebuni.data.EphemerisData
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
-import com.domnis.nebuni.database.EphemerisDataDao
-import com.domnis.nebuni.database.ScienceMissionDao
 import com.domnis.nebuni.network.ScienceAPI
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -14,10 +12,7 @@ import io.ktor.client.engine.mock.toByteArray
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -53,45 +48,6 @@ class ScienceMissionRepositoryTest {
           "2025-01-01T00:00:00": {"ra": "1", "dec": "2", "alt": 30, "az": 90, "is_visible": true}
         }
     """.trimIndent()
-
-    private class FakeScienceMissionDao : ScienceMissionDao {
-        val missions = MutableStateFlow<List<ScienceMission>>(emptyList())
-
-        override suspend fun insert(item: ScienceMission) = insertAll(listOf(item))
-        override suspend fun insertAll(items: List<ScienceMission>) {
-            val keys = items.map { it.missionKey to it.observationPlaceID }.toSet()
-            missions.value = missions.value.filterNot { (it.missionKey to it.observationPlaceID) in keys } + items
-        }
-        override suspend fun clearAll(observationPlaceID: String) {
-            missions.value = missions.value.filterNot { it.observationPlaceID == observationPlaceID }
-        }
-        override suspend fun count(observationPlaceID: String): Int =
-            missions.value.count { it.observationPlaceID == observationPlaceID }
-        override fun getAllAsFlow(observationPlaceID: String): Flow<List<ScienceMission>> =
-            missions.map { list -> list.filter { it.observationPlaceID == observationPlaceID } }
-    }
-
-    private class FakeEphemerisDataDao : EphemerisDataDao {
-        val items = mutableListOf<EphemerisData>()
-
-        override suspend fun insertAll(items: List<EphemerisData>) {
-            this.items += items
-        }
-        override suspend fun clearAll(missionKey: String, observationPlaceID: String) {
-            items.removeAll { it.missionKey == missionKey && it.observationPlaceID == observationPlaceID }
-        }
-        override suspend fun clearEphemerisData(missionKeys: List<String>, observationPlaceID: String) {
-            items.removeAll { it.missionKey !in missionKeys && it.observationPlaceID == observationPlaceID }
-        }
-        override suspend fun getAllEphemerisData(
-            missionKey: String,
-            observationPlaceID: String,
-            timestamp: Long
-        ): List<EphemerisData> = items.filter {
-            it.missionKey == missionKey && it.observationPlaceID == observationPlaceID &&
-                it.timestamp >= timestamp && it.timestamp <= timestamp + 36_000_000
-        }
-    }
 
     private val missionDao = FakeScienceMissionDao()
     private val ephemerisDao = FakeEphemerisDataDao()
@@ -167,5 +123,105 @@ class ScienceMissionRepositoryTest {
 
         assertEquals(listOf(cached), result)
         assertTrue(requests.isEmpty())
+    }
+
+    private fun TestScope.routedRepository(
+        missions: String,
+        missionsStatus: HttpStatusCode = HttpStatusCode.OK,
+        ephemeris: (name: String) -> String = { ephemerisJson }
+    ) = ScienceMissionRepository(
+        scienceMissionDao = missionDao,
+        ephemerisDataDao = ephemerisDao,
+        scienceAPI = ScienceAPI(HttpClient(MockEngine { request ->
+            val body = request.body.toByteArray().decodeToString()
+            val headers = headersOf(HttpHeaders.ContentType, "application/json")
+            if (body.contains("action=get-science-events")) {
+                respond(missions, missionsStatus, headers)
+            } else {
+                val name = body.split("&").first { it.startsWith("name=") }.removePrefix("name=")
+                respond(ephemeris(name), HttpStatusCode.OK, headers)
+            }
+        })),
+        ioDispatcher = StandardTestDispatcher(testScheduler)
+    )
+
+    private fun missionJson(pipelineType: String, ephemerisName: String) = """
+        {"pipeline_type": "$pipelineType", "target_name": "$ephemerisName", "ephemeris_args": {
+          "name": "$ephemerisName", "loc": "43.28,5.37", "tstart": "2025-01-01T00:00:00Z",
+          "duration": "120.0", "gain": "20.0", "exp_time": "500.0"}}
+    """.trimIndent()
+
+    private val twoMissionsJson = """
+        {"good": ${missionJson("c", "GOOD")}, "bad": ${missionJson("p", "BAD")}}
+    """.trimIndent()
+
+    @Test
+    fun refreshScienceMissions_malformedEphemerisDoesNotFailRefreshNorOtherMissions() = runTest {
+        val repository = routedRepository(twoMissionsJson) { name -> if (name == "BAD") "<html>" else ephemerisJson }
+
+        val succeeded = repository.refreshScienceMissions(place, "start", "end")
+
+        assertTrue(succeeded)
+        assertEquals(setOf("good", "bad"), missionDao.missions.value.map { it.missionKey }.toSet())
+        assertEquals(1, ephemerisDao.items.size)
+        assertEquals(setOf("good"), ephemerisDao.items.map { it.missionKey }.toSet())
+    }
+
+    @Test
+    fun refreshScienceMissions_httpErrorReturnsFalseAndWritesNothing() = runTest {
+        val succeeded = routedRepository(twoMissionsJson, HttpStatusCode.InternalServerError)
+            .refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+
+        assertFalse(succeeded)
+        assertTrue(missionDao.missions.value.isEmpty())
+        assertTrue(missionDao.operations.isEmpty())
+        assertTrue(ephemerisDao.items.isEmpty())
+    }
+
+    @Test
+    fun refreshScienceMissions_emptyListWritesNothing() = runTest {
+        val succeeded = routedRepository("{}").refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+
+        assertFalse(succeeded)
+        assertTrue(missionDao.operations.isEmpty())
+        assertTrue(ephemerisDao.items.isEmpty())
+    }
+
+    @Test
+    fun refreshScienceMissions_canCleanDatabaseClearsPlaceBeforeInserting() = runTest {
+        missionDao.insert(ScienceMission(missionKey = "old", observationPlaceID = place.id, pipeline_type = "o"))
+        val other = ScienceMission(missionKey = "other", observationPlaceID = "place-2", pipeline_type = "o")
+        missionDao.insert(other)
+        missionDao.operations.clear()
+
+        val succeeded = routedRepository(twoMissionsJson)
+            .refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+
+        assertTrue(succeeded)
+        assertEquals(listOf("clearAll:${place.id}", "insertAll"), missionDao.operations)
+        val stored = missionDao.missions.value
+        assertEquals(setOf("good", "bad", "other"), stored.map { it.missionKey }.toSet())
+        assertTrue(other in stored)
+    }
+
+    @Test
+    fun refreshScienceMissions_withoutCanCleanDatabaseKeepsExistingMissions() = runTest {
+        missionDao.insert(ScienceMission(missionKey = "old", observationPlaceID = place.id, pipeline_type = "o"))
+        missionDao.operations.clear()
+
+        routedRepository(twoMissionsJson).refreshScienceMissions(place, "start", "end")
+
+        assertEquals(listOf("insertAll"), missionDao.operations)
+        assertTrue("old" in missionDao.missions.value.map { it.missionKey })
+    }
+
+    @Test
+    fun refreshScienceMissions_unknownPipelineTypeIsNotInserted() = runTest {
+        val json = """{"good": ${missionJson("c", "GOOD")}, "weird": ${missionJson("zzz", "WEIRD")}}"""
+
+        val succeeded = routedRepository(json).refreshScienceMissions(place, "start", "end")
+
+        assertTrue(succeeded)
+        assertEquals(listOf("good"), missionDao.missions.value.map { it.missionKey })
     }
 }
