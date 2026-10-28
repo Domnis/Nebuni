@@ -72,8 +72,29 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.e911_emergency
+import nebuni.composeapp.generated.resources.mission_alt_az
+import nebuni.composeapp.generated.resources.mission_alt_az_direction
+import nebuni.composeapp.generated.resources.mission_constellation
+import nebuni.composeapp.generated.resources.mission_date_and_duration
+import nebuni.composeapp.generated.resources.mission_dec
+import nebuni.composeapp.generated.resources.mission_duration
+import nebuni.composeapp.generated.resources.mission_empty
+import nebuni.composeapp.generated.resources.mission_event_info
+import nebuni.composeapp.generated.resources.mission_from
+import nebuni.composeapp.generated.resources.mission_logo_description
+import nebuni.composeapp.generated.resources.mission_open_in_app
+import nebuni.composeapp.generated.resources.mission_open_in_app_icon_description
+import nebuni.composeapp.generated.resources.mission_position
+import nebuni.composeapp.generated.resources.mission_position_at
+import nebuni.composeapp.generated.resources.mission_priority
+import nebuni.composeapp.generated.resources.mission_priority_icon_description
+import nebuni.composeapp.generated.resources.mission_ra
+import nebuni.composeapp.generated.resources.mission_target
+import nebuni.composeapp.generated.resources.mission_to
+import nebuni.composeapp.generated.resources.mission_type_label
 import nebuni.composeapp.generated.resources.nebuni
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import kotlin.time.ExperimentalTime
@@ -158,13 +179,13 @@ fun MissionPage(
             } else {
                 Icon(
                     Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Open in external app's icon",
+                    contentDescription = stringResource(Res.string.mission_open_in_app_icon_description),
                     modifier = Modifier.size(ButtonDefaults.iconSizeFor(size))
                 )
 
                 Spacer(Modifier.size(ButtonDefaults.iconSpacingFor(size)))
 
-                Text("Open in Unistellar app", style = ButtonDefaults.textStyleFor(size))
+                Text(stringResource(Res.string.mission_open_in_app), style = ButtonDefaults.textStyleFor(size))
             }
         }
     }
@@ -194,10 +215,10 @@ fun DataMissionPage(
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.e911_emergency),
-                            contentDescription = "A priority icon",
+                            contentDescription = stringResource(Res.string.mission_priority_icon_description),
                         )
 
-                        Text("This mission is a priority!")
+                        Text(stringResource(Res.string.mission_priority))
                     }
                 }
             }
@@ -205,8 +226,8 @@ fun DataMissionPage(
 
         item {
             Column {
-                Text("Mission type: ${mission.getMissionType().displayName}")
-                Text("Target: ${mission.target_name}")
+                Text(stringResource(Res.string.mission_type_label, stringResource(mission.getMissionType().label)))
+                Text(stringResource(Res.string.mission_target, mission.target_name))
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -216,14 +237,14 @@ fun DataMissionPage(
 
         item {
             Column {
-                Text("Date and duration:", style = fontStyle_header)
+                Text(stringResource(Res.string.mission_date_and_duration), style = fontStyle_header)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text("From: ${mission.getMissionStartDate()}")
-                Text("To: ${mission.getMissionEndDate()}")
+                Text(stringResource(Res.string.mission_from, mission.getMissionStartDate()))
+                Text(stringResource(Res.string.mission_to, mission.getMissionEndDate()))
                 if (!missionHasEphemerisArgs) {
-                    Text("Duration: ${mission.duration}")
+                    Text(stringResource(Res.string.mission_duration, mission.duration))
                 }
             }
 
@@ -240,14 +261,14 @@ fun DataMissionPage(
                     Column(
                         modifier = Modifier.padding(8.dp)
                     ) {
-                        Text("Position:", style = fontStyle_header)
+                        Text(stringResource(Res.string.mission_position), style = fontStyle_header)
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text("RA: ${mission.ra_hms} (${mission.ra})")
-                        Text("Dec: ${mission.dec_dms} (${mission.dec})")
-                        Text("Alt/Az: ${mission.alt}° / ${mission.az}° (${mission.cardinal_direction})")
-                        Text("Constellation: ${mission.constellation}")
+                        Text(stringResource(Res.string.mission_ra, mission.ra_hms, mission.ra))
+                        Text(stringResource(Res.string.mission_dec, mission.dec_dms, mission.dec))
+                        Text(stringResource(Res.string.mission_alt_az_direction, mission.alt, mission.az, mission.cardinal_direction))
+                        Text(stringResource(Res.string.mission_constellation, mission.constellation))
                     }
                 }
 
@@ -263,13 +284,13 @@ fun DataMissionPage(
                     Column(
                         modifier = Modifier.padding(8.dp)
                     ) {
-                        Text("Position at ${it.getParsedDate()}:", style = fontStyle_header)
+                        Text(stringResource(Res.string.mission_position_at, it.getParsedDate()), style = fontStyle_header)
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Text("RA: ${it.ra_hms} (${it.ra})")
-                        Text("Dec: ${it.dec_dms} (${it.dec})")
-                        Text("Alt/Az: ${it.alt}° / ${it.az}°")
+                        Text(stringResource(Res.string.mission_ra, it.ra_hms, it.ra))
+                        Text(stringResource(Res.string.mission_dec, it.dec_dms, it.dec))
+                        Text(stringResource(Res.string.mission_alt_az, it.alt, it.az))
                     }
                 }
             }
@@ -294,7 +315,7 @@ fun DataMissionPage(
                 enabled = !missionEventLink.isNullOrEmpty(),
                 contentPadding = ButtonDefaults.contentPaddingFor(size)
             ) {
-                Text("Check event info on web site", style = ButtonDefaults.textStyleFor(size))
+                Text(stringResource(Res.string.mission_event_info), style = ButtonDefaults.textStyleFor(size))
             }
         }
 
@@ -320,13 +341,13 @@ fun EmptyMissionPage() {
         ) {
             Image(
                 painter = painterResource(Res.drawable.nebuni),
-                contentDescription = "Nebuni's logo",
+                contentDescription = stringResource(Res.string.mission_logo_description),
                 modifier = Modifier.size(200.dp).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )
 
             Text(
-                "No mission is currently selected...\nChoose one on the side menu!",
+                stringResource(Res.string.mission_empty),
                 textAlign = TextAlign.Center
             )
         }
