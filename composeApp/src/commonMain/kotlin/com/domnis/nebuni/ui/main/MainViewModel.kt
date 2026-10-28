@@ -23,10 +23,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domnis.nebuni.AppState
-import com.domnis.nebuni.customInstantParseFormat
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
-import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.getCurrentDate
 import com.domnis.nebuni.getCurrentDateAndTime
@@ -38,7 +36,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.parse
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -51,7 +48,7 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
 
     var currentObservationPlaceConfigurationState = mutableStateOf(ObservationPlaceConfigurationState.loading)
     var isLoadingMissions = mutableStateOf(false)
-    var scienceMissionList = mutableStateOf(arrayListOf<Pair<String, List<ScienceMission>>>())
+    var scienceMissionList = mutableStateOf<List<MissionSection>>(emptyList())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
 
     var startTime = mutableStateOf(getCurrentDateAndTime())
@@ -59,13 +56,6 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
 
     private val scienceMissionRepository = ScienceMissionRepository(database)
     private var missionJob: Job? = null
-
-    private fun getSection(today: String, sectionDate: String, sectionItems: ArrayList<ScienceMission>): Pair<String, List<ScienceMission>>? {
-        if (sectionDate.isEmpty() || sectionItems.isEmpty()) return null
-
-        val sectionTitle = if (sectionDate == today) "Today" else sectionDate
-        return Pair(sectionTitle, sectionItems)
-    }
 
     init {
         viewModelScope.launch {
@@ -77,66 +67,11 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                         scienceMissionRepository
                             .getScienceMissionFor(appState.currentObservationPlace.value)
                             .collect { missions ->
-                                //sort missions by date for now
-                                var today = getCurrentDate(TimeZone.currentSystemDefault())
-                                var todayNearMidnight = "${today}T18:00:00"
-                                val todayEpochMilliseconds = kotlin.time.Instant.parse(
-                                    todayNearMidnight,
-                                    customInstantParseFormat()
-                                ).toEpochMilliseconds()
-                                val nowEpochMilliseconds = kotlin.time.Clock.System.now().toEpochMilliseconds()
-
-                                var currentDate = ""
-                                var currentList = arrayListOf<ScienceMission>()
-                                var result = arrayListOf<Pair<String, List<ScienceMission>>>()
-                                missions
-                                    .sortedBy {
-                                        it.getMissionStartTimestamp()
-                                    }
-//                                    .sortedBy {
-//                                        val missionTimestamp = it.getMissionStartTimestamp()
-//                                        if (
-//                                            it.getMissionType() != ScienceMissionType.CometaryActivity
-//                                            || missionTimestamp > nowEpochMilliseconds
-//                                            ) {
-//                                            missionTimestamp
-//                                        } else {
-//                                            nowEpochMilliseconds
-//                                        }
-//                                    }
-                                    .forEach {
-                                        val missionTimestamp = it.getMissionStartTimestamp()
-                                        val startDate = if (
-                                            (it.getMissionType() != ScienceMissionType.CometaryActivity
-                                                    && it.getMissionType() != ScienceMissionType.PlanetaryDefense)
-                                            || missionTimestamp > nowEpochMilliseconds
-                                            ) {
-                                            it.getMissionStartDateOnly()
-                                        } else today
-
-                                        if (startDate != currentDate) {
-                                            getSection(
-                                                today,
-                                                currentDate,
-                                                currentList)?.let { section ->
-                                                result.add(section)
-                                            }
-
-                                            currentDate = startDate
-                                            currentList = arrayListOf<ScienceMission>()
-                                        }
-
-                                        currentList.add(it)
-                                    }
-
-                                getSection(
-                                    today,
-                                    currentDate,
-                                    currentList)?.let { section ->
-                                    result.add(section)
-                                }
-
-                                scienceMissionList.value = result
+                                scienceMissionList.value = groupMissionsByDay(
+                                    missions,
+                                    today = getCurrentDate(TimeZone.currentSystemDefault()),
+                                    nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                                )
                             }
                     }
                 }
