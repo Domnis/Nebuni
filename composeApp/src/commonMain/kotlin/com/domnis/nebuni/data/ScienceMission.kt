@@ -208,8 +208,8 @@ class SimpleScienceMissionJsonParser {
         val result = mutableListOf<ScienceMission>()
 
         jsonObject.forEach { (key, value) ->
-            if (key != "query") {
-                val content = determineTypeAndParse(observationPlaceID, key, value.jsonObject)
+            if (key != "query" && value is JsonObject) {
+                val content = determineTypeAndParse(observationPlaceID, key, value)
                 result.add(content)
             }
         }

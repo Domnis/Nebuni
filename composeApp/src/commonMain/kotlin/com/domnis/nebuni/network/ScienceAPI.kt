@@ -29,9 +29,11 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.submitForm
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.ParametersBuilder
 import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import kotlin.coroutines.cancellation.CancellationException
 
 class ScienceAPI(
     private val httpClient: HttpClient = createDefaultHttpClient()
@@ -42,120 +44,100 @@ class ScienceAPI(
         startDateTime: String,
         endDateTime: String
     ): List<ScienceMission> {
-        val response = try {
-            httpClient.submitForm(
-                "https://science.unistellar.com/wp-admin/admin-ajax.php",
-                formParameters = parameters {
-                    append("action", "get-science-events")
-                    append("date", startDateTime) // start date?
-                    append("pipeline", "o,e,c,p") // type of science events => o = occultation, c = comet, e = exoplanet, p = planetary defense
-                    append("lat", "${observationPlace.latitude}")
-                    append("long", "${observationPlace.longitude}")
-                    append("tend", endDateTime) // end date for fetch?
-                    append("alt", "${observationPlace.altMin},${observationPlace.altMax}") // Full Alt possibles
-                    append("az", "${observationPlace.azMin},${observationPlace.azMax}") // Full Az possibles
-                }
-            )
-        } catch(e: Exception) {
+        val body = postForm {
+            append("action", "get-science-events")
+            append("date", startDateTime) // start date?
+            append("pipeline", "o,e,c,p") // type of science events => o = occultation, c = comet, e = exoplanet, p = planetary defense
+            append("lat", "${observationPlace.latitude}")
+            append("long", "${observationPlace.longitude}")
+            append("tend", endDateTime) // end date for fetch?
+            append("alt", "${observationPlace.altMin},${observationPlace.altMax}") // Full Alt possibles
+            append("az", "${observationPlace.azMin},${observationPlace.azMax}") // Full Az possibles
+        } ?: return emptyList()
+
+        return try {
+            SimpleScienceMissionJsonParser().parseJson(body, observationPlace.id)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             e.printStackTrace()
-            null
+            emptyList()
         }
-
-        if (response == null || response.status != HttpStatusCode.OK) {
-            return emptyList()
-        }
-
-        val parser = SimpleScienceMissionJsonParser()
-
-        return parser.parseJson(response.body(), observationPlace.id)
     }
 
     suspend fun getCometMissionsEphemeris(
         scienceMission: ScienceMission,
         fromStartDateTime: String
-    ): List<EphemerisData> {
-        val args = scienceMission.ephemeris_args
-        if (args == null) {
-            return emptyList()
-        }
-
-        val response = try {
-            httpClient.submitForm(
-                "https://science.unistellar.com/wp-admin/admin-ajax.php",
-                formParameters = parameters {
-                    append("action", "get-ephemerid")
-                    append("name", args.name)
-                    append("date", fromStartDateTime.ifEmpty { args.tstart })
-                    append("lat", args.loc.split(",")[0])
-                    append("lng", args.loc.split(",")[1])
-                    append("step", "10")
-                    append("duration", args.duration.split(".")[0])
-                    append("et", args.exp_time.split(".")[0])
-                    append("gain", args.gain.split(".")[0])
-                    append("is_comet", "true")
-                }
-            )
-        } catch(e: Exception) {
-            e.printStackTrace()
-            null
-        }
-
-        if (response == null || response.status != HttpStatusCode.OK) {
-            print("comet eph no response or bad response: ${response?.status}")
-            return emptyList()
-        }
-
-        val parser = SimpleEphemeridsJsonParser()
-
-        return parser.parseJson(
-            response.body(),
-            scienceMission.missionKey,
-            scienceMission.observationPlaceID
-        )
-    }
+    ): List<EphemerisData> = getMissionsEphemeris(scienceMission, fromStartDateTime, step = 10, isComet = true)
 
     suspend fun getPlanetaryDefenseMissionsEphemeris(
         scienceMission: ScienceMission,
         fromStartDateTime: String
+    ): List<EphemerisData> = getMissionsEphemeris(scienceMission, fromStartDateTime, step = 60, isComet = false)
+
+    private suspend fun getMissionsEphemeris(
+        scienceMission: ScienceMission,
+        fromStartDateTime: String,
+        step: Int,
+        isComet: Boolean
     ): List<EphemerisData> {
         val args = scienceMission.ephemeris_args
         if (args == null) {
             return emptyList()
         }
 
-        val response = try {
-            httpClient.submitForm(
-                "https://science.unistellar.com/wp-admin/admin-ajax.php",
-                formParameters = parameters {
-                    append("action", "get-ephemerid")
-                    append("name", args.name)
-                    append("date", fromStartDateTime.ifEmpty { args.tstart })
-                    append("lat", args.loc.split(",")[0])
-                    append("lng", args.loc.split(",")[1])
-                    append("step", "60")
-                    append("duration", args.duration.split(".")[0])
-                    append("et", args.exp_time.split(".")[0])
-                    append("gain", args.gain.split(".")[0])
-                    append("is_comet", "false")
-                }
+        val body = postForm {
+            append("action", "get-ephemerid")
+            append("name", args.name)
+            append("date", fromStartDateTime.ifEmpty { args.tstart })
+            append("lat", args.loc.split(",")[0])
+            append("lng", args.loc.split(",")[1])
+            append("step", "$step")
+            append("duration", args.duration.split(".")[0])
+            append("et", args.exp_time.split(".")[0])
+            append("gain", args.gain.split(".")[0])
+            append("is_comet", "$isComet")
+        } ?: return emptyList()
+
+        return try {
+            SimpleEphemeridsJsonParser().parseJson(
+                body,
+                scienceMission.missionKey,
+                scienceMission.observationPlaceID
             )
-        } catch(e: Exception) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    /**
+     * Posts the form to the science endpoint and returns the response body,
+     * or null on a non-200 status or any failure other than cancellation.
+     */
+    private suspend fun postForm(formParameters: ParametersBuilder.() -> Unit): String? {
+        return try {
+            val response = httpClient.submitForm(
+                SCIENCE_ENDPOINT,
+                formParameters = parameters(formParameters)
+            )
+            if (response.status != HttpStatusCode.OK) {
+                print("science api bad response: ${response.status}")
+                return null
+            }
+            response.body<String>()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
             e.printStackTrace()
             null
         }
+    }
 
-        if (response == null || response.status != HttpStatusCode.OK) {
-            print("comet eph no response or bad response: ${response?.status}")
-            return emptyList()
-        }
-
-        val parser = SimpleEphemeridsJsonParser()
-
-        return parser.parseJson(
-            response.body(),
-            scienceMission.missionKey,
-            scienceMission.observationPlaceID
-        )
+    private companion object {
+        const val SCIENCE_ENDPOINT = "https://science.unistellar.com/wp-admin/admin-ajax.php"
     }
 }
 
