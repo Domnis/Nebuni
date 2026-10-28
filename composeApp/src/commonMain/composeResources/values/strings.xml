@@ -13,6 +13,12 @@
     <string name="filter_no_matching_mission">No mission matches these filters</string>
     <string name="filter_clear">Clear filters</string>
 
+    <!-- Priority and start date filters -->
+    <string name="filter_priority">Priority</string>
+    <string name="filter_date_all">All dates</string>
+    <string name="filter_date_today">Today</string>
+    <string name="filter_date_next_3_days">Next 3 days</string>
+
     <!-- Observation place form validation errors -->
     <string name="error_latitude_format">Latitude is in incorrect format</string>
     <string name="error_latitude_range">Latitude should be between -90° and 90°</string>

@@ -212,6 +212,8 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     availableTypes = availableMissionTypes,
                                     filter = missionFilter,
                                     onToggleType = { type -> mainViewModel.toggleType(type) },
+                                    onTogglePriorityOnly = { mainViewModel.togglePriorityOnly() },
+                                    onSelectDateRange = { dateRange -> mainViewModel.selectDateRange(dateRange) },
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
                             }
