@@ -1,4 +1,28 @@
 <resources>
+    <!-- Mission list section headers -->
+    <string name="section_today">Today</string>
+
+    <!-- Mission type filter -->
+    <string name="mission_type_asteroid_occultation">Asteroid occultations</string>
+    <string name="mission_type_cometary_activity">Cometary activity</string>
+    <string name="mission_type_exoplanet_transit">Exoplanet transits</string>
+    <string name="mission_type_planetary_defense">Planetary defense</string>
+    <string name="mission_type_satellite">Satellite</string>
+    <string name="mission_type_unknown">Unknown</string>
+    <string name="filter_chip_label">%1$s (%2$d)</string>
+    <string name="filter_no_matching_mission">No mission matches these filters</string>
+    <string name="filter_clear">Clear filters</string>
+
+    <!-- Priority and start date filters -->
+    <string name="filter_priority">Priority</string>
+    <string name="filter_date_all">All dates</string>
+    <string name="filter_date_today">Today</string>
+    <string name="filter_date_next_3_days">Next 3 days</string>
+
+    <!-- Mission list grouping selector -->
+    <string name="grouping_date">By date</string>
+    <string name="grouping_type">By type</string>
+
     <!-- Observation place form validation errors -->
     <string name="error_latitude_format">Latitude is in incorrect format</string>
     <string name="error_latitude_range">Latitude should be between -90° and 90°</string>

@@ -23,7 +23,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domnis.nebuni.AppState
-import com.domnis.nebuni.customInstantParseFormat
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
@@ -34,11 +33,11 @@ import com.domnis.nebuni.getCurrentDateAndTimeWithOffset
 import com.domnis.nebuni.repository.ScienceMissionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.parse
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
@@ -51,21 +50,19 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
 
     var currentObservationPlaceConfigurationState = mutableStateOf(ObservationPlaceConfigurationState.loading)
     var isLoadingMissions = mutableStateOf(false)
-    var scienceMissionList = mutableStateOf(arrayListOf<Pair<String, List<ScienceMission>>>())
+    var scienceMissionList = mutableStateOf<List<MissionSection>>(emptyList())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
+
+    // In memory only: kept by the ViewModel across configuration changes, not persisted.
+    var filter = mutableStateOf(MissionFilter())
+    var availableTypes = mutableStateOf<List<MissionTypeCount>>(emptyList())
+    var grouping = mutableStateOf(Grouping.Date)
 
     var startTime = mutableStateOf(getCurrentDateAndTime())
     var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
 
     private val scienceMissionRepository = ScienceMissionRepository(database)
     private var missionJob: Job? = null
-
-    private fun getSection(today: String, sectionDate: String, sectionItems: ArrayList<ScienceMission>): Pair<String, List<ScienceMission>>? {
-        if (sectionDate.isEmpty() || sectionItems.isEmpty()) return null
-
-        val sectionTitle = if (sectionDate == today) "Today" else sectionDate
-        return Pair(sectionTitle, sectionItems)
-    }
 
     init {
         viewModelScope.launch {
@@ -76,67 +73,25 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
                     missionJob = viewModelScope.launch {
                         scienceMissionRepository
                             .getScienceMissionFor(appState.currentObservationPlace.value)
-                            .collect { missions ->
-                                //sort missions by date for now
-                                var today = getCurrentDate(TimeZone.currentSystemDefault())
-                                var todayNearMidnight = "${today}T18:00:00"
-                                val todayEpochMilliseconds = kotlin.time.Instant.parse(
-                                    todayNearMidnight,
-                                    customInstantParseFormat()
-                                ).toEpochMilliseconds()
-                                val nowEpochMilliseconds = kotlin.time.Clock.System.now().toEpochMilliseconds()
-
-                                var currentDate = ""
-                                var currentList = arrayListOf<ScienceMission>()
-                                var result = arrayListOf<Pair<String, List<ScienceMission>>>()
-                                missions
-                                    .sortedBy {
-                                        it.getMissionStartTimestamp()
-                                    }
-//                                    .sortedBy {
-//                                        val missionTimestamp = it.getMissionStartTimestamp()
-//                                        if (
-//                                            it.getMissionType() != ScienceMissionType.CometaryActivity
-//                                            || missionTimestamp > nowEpochMilliseconds
-//                                            ) {
-//                                            missionTimestamp
-//                                        } else {
-//                                            nowEpochMilliseconds
-//                                        }
-//                                    }
-                                    .forEach {
-                                        val missionTimestamp = it.getMissionStartTimestamp()
-                                        val startDate = if (
-                                            (it.getMissionType() != ScienceMissionType.CometaryActivity
-                                                    && it.getMissionType() != ScienceMissionType.PlanetaryDefense)
-                                            || missionTimestamp > nowEpochMilliseconds
-                                            ) {
-                                            it.getMissionStartDateOnly()
-                                        } else today
-
-                                        if (startDate != currentDate) {
-                                            getSection(
-                                                today,
-                                                currentDate,
-                                                currentList)?.let { section ->
-                                                result.add(section)
-                                            }
-
-                                            currentDate = startDate
-                                            currentList = arrayListOf<ScienceMission>()
-                                        }
-
-                                        currentList.add(it)
-                                    }
-
-                                getSection(
-                                    today,
-                                    currentDate,
-                                    currentList)?.let { section ->
-                                    result.add(section)
+                            .combine(snapshotFlow { filter.value }) { missions, filter ->
+                                missions to filter
+                            }
+                            .combine(snapshotFlow { grouping.value }) { (missions, filter), grouping ->
+                                Triple(missions, filter, grouping)
+                            }
+                            .collect { (missions, filter, grouping) ->
+                                availableTypes.value = countMissionTypes(missions)
+                                val today = getCurrentDate(TimeZone.currentSystemDefault())
+                                val nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                                val filteredMissions = filterMissions(missions, filter, today, nowEpochMillis)
+                                scienceMissionList.value = when (grouping) {
+                                    Grouping.Date -> groupMissionsByDay(
+                                        filteredMissions,
+                                        today = today,
+                                        nowEpochMillis = nowEpochMillis
+                                    )
+                                    Grouping.Type -> groupMissionsByType(filteredMissions)
                                 }
-
-                                scienceMissionList.value = result
                             }
                     }
                 }
@@ -219,5 +174,25 @@ class MainViewModel(var appState: AppState, val database: AppDatabase): ViewMode
 
     fun unselectMission() {
         selectedMission.value = null
+    }
+
+    fun toggleType(type: ScienceMissionType) {
+        filter.value = filter.value.toggle(type)
+    }
+
+    fun togglePriorityOnly() {
+        filter.value = filter.value.copy(priorityOnly = !filter.value.priorityOnly)
+    }
+
+    fun selectDateRange(dateRange: DateRange) {
+        filter.value = filter.value.copy(dateRange = dateRange)
+    }
+
+    fun selectGrouping(newGrouping: Grouping) {
+        grouping.value = newGrouping
+    }
+
+    fun clearFilters() {
+        filter.value = MissionFilter()
     }
 }

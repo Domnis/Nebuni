@@ -71,6 +71,10 @@ import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.theme.fontStyle_header
+import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.filter_clear
+import nebuni.composeapp.generated.resources.filter_no_matching_mission
+import nebuni.composeapp.generated.resources.section_today
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -91,9 +95,11 @@ fun ListPaneLoadingPage() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ListPaneValidPage(
-    scienceMissionList: ArrayList<Pair<String, List<ScienceMission>>>,
+    scienceMissionList: List<MissionSection>,
     isLoadingMissions: Boolean,
     selectedMission: ScienceMission? = null,
+    isFilterResultEmpty: Boolean = false,
+    onClearFilters: () -> Unit = {},
     onRefresh: () -> Unit,
     onMissionSelected: (ScienceMission) -> Unit
 ) {
@@ -118,10 +124,31 @@ fun ListPaneValidPage(
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
+            if (isFilterResultEmpty) {
+                // Kept inside the list so pull-to-refresh still works
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(stringResource(Res.string.filter_no_matching_mission))
+
+                        Button(onClick = onClearFilters) {
+                            Text(stringResource(Res.string.filter_clear))
+                        }
+                    }
+                }
+            }
+
             scienceMissionList.forEach { section ->
                 stickyHeader {
                     Text(
-                        section.first,
+                        when {
+                            section.type != null -> stringResource(section.type.labelResource())
+                            section.isToday -> stringResource(Res.string.section_today)
+                            else -> section.date
+                        },
                         modifier = Modifier.fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
                             .padding(top = 20.dp, bottom = 8.dp),
@@ -130,7 +157,7 @@ fun ListPaneValidPage(
                     )
                 }
 
-                items(section.second) { mission ->
+                items(section.missions) { mission ->
                     ScienceMissionListItem(
                         mission,
                         modifier = Modifier.padding(bottom = 8.dp),

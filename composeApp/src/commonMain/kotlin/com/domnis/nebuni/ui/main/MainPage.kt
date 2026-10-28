@@ -101,6 +101,10 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
     var scienceMissionList by mainViewModel.scienceMissionList
     var selectedMission by mainViewModel.selectedMission
 
+    val missionFilter by mainViewModel.filter
+    val availableMissionTypes by mainViewModel.availableTypes
+    val missionGrouping by mainViewModel.grouping
+
     var startDateTime by mainViewModel.startTime
     var endDateTime by mainViewModel.endTime
 
@@ -200,6 +204,23 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                 )
                             }
 
+                            if (
+                                currentObservationPlaceConfigurationState
+                                    == MainViewModel.ObservationPlaceConfigurationState.valid
+                                && availableMissionTypes.isNotEmpty()
+                            ) {
+                                MissionFilterBar(
+                                    availableTypes = availableMissionTypes,
+                                    filter = missionFilter,
+                                    onToggleType = { type -> mainViewModel.toggleType(type) },
+                                    onTogglePriorityOnly = { mainViewModel.togglePriorityOnly() },
+                                    onSelectDateRange = { dateRange -> mainViewModel.selectDateRange(dateRange) },
+                                    grouping = missionGrouping,
+                                    onSelectGrouping = { grouping -> mainViewModel.selectGrouping(grouping) },
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+
                             AnimatedContent(
                                 targetState = currentObservationPlaceConfigurationState,
                                 modifier = Modifier.fillMaxSize()
@@ -218,6 +239,12 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                                 scienceMissionList,
                                                 isLoadingMissions = isLoadingMissions,
                                                 selectedMission = selectedMission,
+                                                isFilterResultEmpty = missionFilter.isActive
+                                                        && availableMissionTypes.isNotEmpty()
+                                                        && scienceMissionList.isEmpty(),
+                                                onClearFilters = {
+                                                    mainViewModel.clearFilters()
+                                                },
                                                 onRefresh = {
                                                     mainViewModel.refreshScienceMissions()
                                                 }
