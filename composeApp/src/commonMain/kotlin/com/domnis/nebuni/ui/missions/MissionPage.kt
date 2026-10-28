@@ -62,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.data.EphemerisData
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
-import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.repository.ScienceMissionRepository
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -93,7 +92,7 @@ fun MissionPage(
     ) {
         var missionEphemerisData by remember { mutableStateOf(listOf<EphemerisData>()) }
         var isLoadingEphemerisData by remember { mutableStateOf(false) }
-        val appDatabase: AppDatabase = koinInject()
+        val scienceMissionRepository: ScienceMissionRepository = koinInject()
 
         LaunchedEffect(mission) {
             if (
@@ -106,11 +105,11 @@ fun MissionPage(
                     async(Dispatchers.IO) {
                         missionEphemerisData =
                             if (mission.getMissionType() == ScienceMissionType.CometaryActivity) {
-                                ScienceMissionRepository(appDatabase).getCometEphemerisData(
+                                scienceMissionRepository.getCometEphemerisData(
                                     cometScienceMission = mission
                                 )
                             } else {
-                                ScienceMissionRepository(appDatabase).getPlanetaryDefenseData(
+                                scienceMissionRepository.getPlanetaryDefenseData(
                                     planetaryDefenseScienceMission = mission
                                 )
                             }

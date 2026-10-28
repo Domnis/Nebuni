@@ -18,7 +18,10 @@
 
 package com.domnis.nebuni
 
+import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.database.getRoomDatabase
+import com.domnis.nebuni.network.ScienceAPI
+import com.domnis.nebuni.repository.ScienceMissionRepository
 import com.domnis.nebuni.ui.main.MainViewModel
 import com.domnis.nebuni.ui.splash.SplashViewModel
 import org.koin.core.module.Module
@@ -29,6 +32,15 @@ expect fun platformModule(): Module
 
 val appModule = module {
     single { AppState() }
+    single { ScienceAPI() }
+    single {
+        val database = get<AppDatabase>()
+        ScienceMissionRepository(
+            scienceMissionDao = database.getScienceMissionDao(),
+            ephemerisDataDao = database.getEphemerisDataDao(),
+            scienceAPI = get()
+        )
+    }
     viewModelOf(::SplashViewModel)
     viewModelOf(::MainViewModel)
 }
