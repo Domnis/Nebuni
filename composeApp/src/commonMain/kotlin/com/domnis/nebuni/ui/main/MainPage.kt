@@ -74,13 +74,16 @@ import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.missions.EmptyMissionPage
 import com.domnis.nebuni.ui.missions.MissionPage
+import com.domnis.nebuni.ui.missions.label
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.e911_emergency
+import nebuni.composeapp.generated.resources.mission_type_label
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -375,7 +378,7 @@ fun ScienceMissionListItem(
             }
 
             Text(
-                "Mission type: ${mission.getMissionType().displayName}",
+                stringResource(Res.string.mission_type_label, stringResource(mission.getMissionType().label)),
                 maxLines = 1
             )
 

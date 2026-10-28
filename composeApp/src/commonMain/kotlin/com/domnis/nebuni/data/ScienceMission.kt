@@ -36,13 +36,13 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlin.time.ExperimentalTime
 
-enum class ScienceMissionType(val displayName: String) {
-    AsteroidOccultation("Asteroid occultations"),
-    CometaryActivity("Cometary activity"),
-    ExoplanetTransit("Exoplanet transits"),
-    PlanetaryDefense("Planetary defense"),
-    Satellite("Satellite"),
-    Unknown("Unknown")
+enum class ScienceMissionType {
+    AsteroidOccultation,
+    CometaryActivity,
+    ExoplanetTransit,
+    PlanetaryDefense,
+    Satellite,
+    Unknown
 }
 
 @Serializable
