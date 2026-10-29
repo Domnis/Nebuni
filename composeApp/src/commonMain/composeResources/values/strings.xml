@@ -2,6 +2,23 @@
     <!-- Mission list section headers -->
     <string name="section_today">Today</string>
 
+    <!-- Mission type filter -->
+    <string name="mission_type_asteroid_occultation">Asteroid occultations</string>
+    <string name="mission_type_cometary_activity">Cometary activity</string>
+    <string name="mission_type_exoplanet_transit">Exoplanet transits</string>
+    <string name="mission_type_planetary_defense">Planetary defense</string>
+    <string name="mission_type_satellite">Satellite</string>
+    <string name="mission_type_unknown">Unknown</string>
+    <string name="filter_chip_label">%1$s (%2$d)</string>
+    <string name="filter_no_matching_mission">No mission matches these filters</string>
+    <string name="filter_clear">Clear filters</string>
+
+    <!-- Priority and start date filters -->
+    <string name="filter_priority">Priority</string>
+    <string name="filter_date_all">All dates</string>
+    <string name="filter_date_today">Today</string>
+    <string name="filter_date_next_3_days">Next 3 days</string>
+
     <!-- Observation place form validation errors -->
     <string name="error_latitude_format">Latitude is in incorrect format</string>
     <string name="error_latitude_range">Latitude should be between -90° and 90°</string>
@@ -15,4 +32,26 @@
     <string name="error_azimuth_max_format">Azimuth Max is in incorrect format</string>
     <string name="error_azimuth_min_range">Azimuth Min should be between 0° and 360°</string>
     <string name="error_azimuth_max_range">Azimuth Max should be between 0° and 360° and bigger than Azimuth Min</string>
+
+    <!-- Mission page -->
+    <string name="mission_open_in_app_icon_description">Open in external app's icon</string>
+    <string name="mission_open_in_app">Open in Unistellar app</string>
+    <string name="mission_priority_icon_description">A priority icon</string>
+    <string name="mission_priority">This mission is a priority!</string>
+    <string name="mission_type_label">Mission type: %1$s</string>
+    <string name="mission_target">Target: %1$s</string>
+    <string name="mission_date_and_duration">Date and duration:</string>
+    <string name="mission_from">From: %1$s</string>
+    <string name="mission_to">To: %1$s</string>
+    <string name="mission_duration">Duration: %1$s</string>
+    <string name="mission_position">Position:</string>
+    <string name="mission_position_at">Position at %1$s:</string>
+    <string name="mission_ra">RA: %1$s (%2$s)</string>
+    <string name="mission_dec">Dec: %1$s (%2$s)</string>
+    <string name="mission_alt_az_direction">Alt/Az: %1$s° / %2$s° (%3$s)</string>
+    <string name="mission_alt_az">Alt/Az: %1$s° / %2$s°</string>
+    <string name="mission_constellation">Constellation: %1$s</string>
+    <string name="mission_event_info">Check event info on web site</string>
+    <string name="mission_logo_description">Nebuni's logo</string>
+    <string name="mission_empty">No mission is currently selected...\nChoose one on the side menu!</string>
 </resources>

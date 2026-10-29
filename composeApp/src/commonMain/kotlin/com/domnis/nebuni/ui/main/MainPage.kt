@@ -74,13 +74,16 @@ import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.missions.EmptyMissionPage
 import com.domnis.nebuni.ui.missions.MissionPage
+import com.domnis.nebuni.ui.missions.label
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.e911_emergency
+import nebuni.composeapp.generated.resources.mission_type_label
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -100,6 +103,9 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
 
     var scienceMissionList by mainViewModel.scienceMissionList
     var selectedMission by mainViewModel.selectedMission
+
+    val missionFilter by mainViewModel.filter
+    val availableMissionTypes by mainViewModel.availableTypes
 
     var startDateTime by mainViewModel.startTime
     var endDateTime by mainViewModel.endTime
@@ -200,6 +206,21 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                 )
                             }
 
+                            if (
+                                currentObservationPlaceConfigurationState
+                                    == MainViewModel.ObservationPlaceConfigurationState.valid
+                                && availableMissionTypes.isNotEmpty()
+                            ) {
+                                MissionFilterBar(
+                                    availableTypes = availableMissionTypes,
+                                    filter = missionFilter,
+                                    onToggleType = { type -> mainViewModel.toggleType(type) },
+                                    onTogglePriorityOnly = { mainViewModel.togglePriorityOnly() },
+                                    onSelectDateRange = { dateRange -> mainViewModel.selectDateRange(dateRange) },
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+
                             AnimatedContent(
                                 targetState = currentObservationPlaceConfigurationState,
                                 modifier = Modifier.fillMaxSize()
@@ -218,6 +239,12 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                                 scienceMissionList,
                                                 isLoadingMissions = isLoadingMissions,
                                                 selectedMission = selectedMission,
+                                                isFilterResultEmpty = missionFilter.isActive
+                                                        && availableMissionTypes.isNotEmpty()
+                                                        && scienceMissionList.isEmpty(),
+                                                onClearFilters = {
+                                                    mainViewModel.clearFilters()
+                                                },
                                                 onRefresh = {
                                                     mainViewModel.refreshScienceMissions()
                                                 }
@@ -375,7 +402,7 @@ fun ScienceMissionListItem(
             }
 
             Text(
-                "Mission type: ${mission.getMissionType().displayName}",
+                stringResource(Res.string.mission_type_label, stringResource(mission.getMissionType().label)),
                 maxLines = 1
             )
 

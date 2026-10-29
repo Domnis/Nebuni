@@ -14,6 +14,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -49,6 +50,9 @@ class ScienceAPITest {
           "2025-01-01T00:10:00": {"ra": "3", "dec": "4", "alt": 31, "az": 91, "is_visible": false}
         }
     """.trimIndent()
+
+    // Invalid JSON, then valid JSON that is not an object (e.g. admin-ajax's "0").
+    private val malformedBodies = listOf("not json", "<html>", "oops", "0", "[]")
 
     private fun api(handler: MockRequestHandler) = ScienceAPI(HttpClient(MockEngine(handler)))
 
@@ -91,10 +95,31 @@ class ScienceAPITest {
     }
 
     @Test
-    fun listScienceMissions_malformedBodyThrows() = runTest {
-        // Current behaviour: a 200 with an invalid body is not caught by the API.
-        assertFailsWith<Exception> {
-            api(json("not json")).listScienceMissions(place, "a", "b")
+    fun listScienceMissions_malformedBodyGivesEmptyList() = runTest {
+        for (body in malformedBodies) {
+            assertEquals(emptyList(), api(json(body)).listScienceMissions(place, "a", "b"), body)
+        }
+    }
+
+    @Test
+    fun listScienceMissions_skipsNonObjectEntries() = runTest {
+        val body = """
+            {
+              "query": {"foo": "bar"},
+              "m1": {"pipeline_type": "c", "target_name": "Comet"},
+              "broken": "not an object",
+              "list": [1, 2],
+              "m2": {"pipeline_type": "p", "target_name": "Asteroid"}
+            }
+        """.trimIndent()
+        val result = api(json(body)).listScienceMissions(place, "a", "b")
+        assertEquals(listOf("m1", "m2"), result.map { it.missionKey })
+    }
+
+    @Test
+    fun listScienceMissions_cancellationIsRethrown() = runTest {
+        assertFailsWith<CancellationException> {
+            api { throw CancellationException("cancelled") }.listScienceMissions(place, "a", "b")
         }
     }
 
@@ -128,8 +153,17 @@ class ScienceAPITest {
     }
 
     @Test
-    fun getCometMissionsEphemeris_malformedBodyThrows() = runTest {
-        assertFailsWith<Exception> { api(json("<html>")).getCometMissionsEphemeris(mission, "") }
+    fun getCometMissionsEphemeris_malformedBodyGivesEmptyList() = runTest {
+        for (body in malformedBodies) {
+            assertEquals(emptyList(), api(json(body)).getCometMissionsEphemeris(mission, ""), body)
+        }
+    }
+
+    @Test
+    fun getCometMissionsEphemeris_cancellationIsRethrown() = runTest {
+        assertFailsWith<CancellationException> {
+            api { throw CancellationException("cancelled") }.getCometMissionsEphemeris(mission, "")
+        }
     }
 
     @Test
@@ -160,7 +194,16 @@ class ScienceAPITest {
     }
 
     @Test
-    fun getPlanetaryDefenseMissionsEphemeris_malformedBodyThrows() = runTest {
-        assertFailsWith<Exception> { api(json("oops")).getPlanetaryDefenseMissionsEphemeris(mission, "") }
+    fun getPlanetaryDefenseMissionsEphemeris_malformedBodyGivesEmptyList() = runTest {
+        for (body in malformedBodies) {
+            assertEquals(emptyList(), api(json(body)).getPlanetaryDefenseMissionsEphemeris(mission, ""), body)
+        }
+    }
+
+    @Test
+    fun getPlanetaryDefenseMissionsEphemeris_cancellationIsRethrown() = runTest {
+        assertFailsWith<CancellationException> {
+            api { throw CancellationException("cancelled") }.getPlanetaryDefenseMissionsEphemeris(mission, "")
+        }
     }
 }
