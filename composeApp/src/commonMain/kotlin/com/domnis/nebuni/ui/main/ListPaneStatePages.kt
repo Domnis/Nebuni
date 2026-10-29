@@ -72,8 +72,31 @@ import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.cd_info
 import nebuni.composeapp.generated.resources.filter_clear
 import nebuni.composeapp.generated.resources.filter_no_matching_mission
+import nebuni.composeapp.generated.resources.onboarding_intro
+import nebuni.composeapp.generated.resources.onboarding_observation_place_info
+import nebuni.composeapp.generated.resources.onboarding_privacy
+import nebuni.composeapp.generated.resources.onboarding_welcome
+import nebuni.composeapp.generated.resources.place_form_altitude_max
+import nebuni.composeapp.generated.resources.place_form_altitude_max_hint
+import nebuni.composeapp.generated.resources.place_form_altitude_min
+import nebuni.composeapp.generated.resources.place_form_altitude_min_hint
+import nebuni.composeapp.generated.resources.place_form_azimuth_max
+import nebuni.composeapp.generated.resources.place_form_azimuth_max_hint
+import nebuni.composeapp.generated.resources.place_form_azimuth_min
+import nebuni.composeapp.generated.resources.place_form_azimuth_min_hint
+import nebuni.composeapp.generated.resources.place_form_gps_coordinates
+import nebuni.composeapp.generated.resources.place_form_latitude
+import nebuni.composeapp.generated.resources.place_form_latitude_hint
+import nebuni.composeapp.generated.resources.place_form_longitude
+import nebuni.composeapp.generated.resources.place_form_longitude_hint
+import nebuni.composeapp.generated.resources.place_form_name
+import nebuni.composeapp.generated.resources.place_form_name_hint
+import nebuni.composeapp.generated.resources.place_form_submit
+import nebuni.composeapp.generated.resources.place_form_title
+import nebuni.composeapp.generated.resources.place_form_visible_sky_area
 import nebuni.composeapp.generated.resources.section_today
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -186,10 +209,10 @@ fun ListPaneInvalidPage(
                 modifier = Modifier.systemBarsPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Welcome to Nebuni! \uD83D\uDC30", style = fontStyle_header)
+                Text(stringResource(Res.string.onboarding_welcome), style = fontStyle_header)
             }
 
-            Text("Let's start by creating your first Observation Place!")
+            Text(stringResource(Res.string.onboarding_intro))
 
             OutlinedCard(
                 onClick = {},
@@ -202,21 +225,14 @@ fun ListPaneInvalidPage(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Info,
-                        contentDescription = "An info icon"
+                        contentDescription = stringResource(Res.string.cd_info)
                     )
 
-                    Text("Observation Place represents a geographic position " +
-                            "associated with a \"Visible Sky Area\" (VSA).\n" +
-                            "VSA is defined by a range of azimuth and altitude. " +
-                            "(See Unistellar app for more details)"
-                    )
+                    Text(stringResource(Res.string.onboarding_observation_place_info))
                 }
             }
 
-            Text("No worry, " +
-                    "GPS coordinate of Observation Place will only be used when " +
-                    "you'll ask a refresh of the mission's list. " +
-                    "Observation Place are stored locally on your device.")
+            Text(stringResource(Res.string.onboarding_privacy))
 
             if (!isListAndDetailVisible) {
                 HorizontalDivider()
@@ -258,16 +274,16 @@ fun ListPaneInvalidFormPage(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text("Create a new Observation Place", style = fontStyle_header)
+            Text(stringResource(Res.string.place_form_title), style = fontStyle_header)
 
             OutlinedTextField(
                 state = nameState,
                 modifier = Modifier.fillMaxWidth(),
                 label = {
-                    Text("Name")
+                    Text(stringResource(Res.string.place_form_name))
                 },
                 supportingText = {
-                    Text("Home, Home - Balcony, etc...")
+                    Text(stringResource(Res.string.place_form_name_hint))
                 },
                 lineLimits = TextFieldLineLimits.SingleLine,
                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -287,16 +303,16 @@ fun ListPaneInvalidFormPage(
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("GPS Coordinates", style = fontStyle_header)
+                Text(stringResource(Res.string.place_form_gps_coordinates), style = fontStyle_header)
 
                 OutlinedTextField(
                     state = latState,
                     modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("Latitude")
+                        Text(stringResource(Res.string.place_form_latitude))
                     },
                     supportingText = {
-                        Text("Should be between -90° and 90°")
+                        Text(stringResource(Res.string.place_form_latitude_hint))
                     },
                     lineLimits = TextFieldLineLimits.SingleLine,
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -309,10 +325,10 @@ fun ListPaneInvalidFormPage(
                     state = lonState,
                     modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("Longitude")
+                        Text(stringResource(Res.string.place_form_longitude))
                     },
                     supportingText = {
-                        Text("Should be between -180° and 180°")
+                        Text(stringResource(Res.string.place_form_longitude_hint))
                     },
                     lineLimits = TextFieldLineLimits.SingleLine,
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -333,16 +349,16 @@ fun ListPaneInvalidFormPage(
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Visible Sky Area", style = fontStyle_header)
+                Text(stringResource(Res.string.place_form_visible_sky_area), style = fontStyle_header)
 
                 OutlinedTextField(
                     state = altMinState,
                     modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("Altitude Min")
+                        Text(stringResource(Res.string.place_form_altitude_min))
                     },
                     supportingText = {
-                        Text("Should be between 0° and 90°")
+                        Text(stringResource(Res.string.place_form_altitude_min_hint))
                     },
                     lineLimits = TextFieldLineLimits.SingleLine,
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -355,10 +371,10 @@ fun ListPaneInvalidFormPage(
                     state = altMaxState,
                     modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("Altitude Max")
+                        Text(stringResource(Res.string.place_form_altitude_max))
                     },
                     supportingText = {
-                        Text("Should be between 0° and 90° and bigger than Altitude Min")
+                        Text(stringResource(Res.string.place_form_altitude_max_hint))
                     },
                     lineLimits = TextFieldLineLimits.SingleLine,
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -371,10 +387,10 @@ fun ListPaneInvalidFormPage(
                     state = azMinState,
                     modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("Azimuth Min")
+                        Text(stringResource(Res.string.place_form_azimuth_min))
                     },
                     supportingText = {
-                        Text("Should be between 0° and 360°")
+                        Text(stringResource(Res.string.place_form_azimuth_min_hint))
                     },
                     lineLimits = TextFieldLineLimits.SingleLine,
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -387,10 +403,10 @@ fun ListPaneInvalidFormPage(
                     state = azMaxState,
                     modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("Azimuth Max")
+                        Text(stringResource(Res.string.place_form_azimuth_max))
                     },
                     supportingText = {
-                        Text("Should be between 0° and 360° and bigger than Azimuth Min")
+                        Text(stringResource(Res.string.place_form_azimuth_max_hint))
                     },
                     lineLimits = TextFieldLineLimits.SingleLine,
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -426,7 +442,7 @@ fun ListPaneInvalidFormPage(
                     .heightIn(size),
                 contentPadding = ButtonDefaults.contentPaddingFor(size)
             ) {
-                Text("Create Observation Place", style = ButtonDefaults.textStyleFor(size))
+                Text(stringResource(Res.string.place_form_submit), style = ButtonDefaults.textStyleFor(size))
             }
         }
     }
