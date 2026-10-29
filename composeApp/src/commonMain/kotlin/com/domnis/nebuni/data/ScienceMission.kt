@@ -36,13 +36,13 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlin.time.ExperimentalTime
 
-enum class ScienceMissionType(val displayName: String) {
-    AsteroidOccultation("Asteroid occultations"),
-    CometaryActivity("Cometary activity"),
-    ExoplanetTransit("Exoplanet transits"),
-    PlanetaryDefense("Planetary defense"),
-    Satellite("Satellite"),
-    Unknown("Unknown")
+enum class ScienceMissionType {
+    AsteroidOccultation,
+    CometaryActivity,
+    ExoplanetTransit,
+    PlanetaryDefense,
+    Satellite,
+    Unknown
 }
 
 @Serializable
@@ -208,8 +208,8 @@ class SimpleScienceMissionJsonParser {
         val result = mutableListOf<ScienceMission>()
 
         jsonObject.forEach { (key, value) ->
-            if (key != "query") {
-                val content = determineTypeAndParse(observationPlaceID, key, value.jsonObject)
+            if (key != "query" && value is JsonObject) {
+                val content = determineTypeAndParse(observationPlaceID, key, value)
                 result.add(content)
             }
         }

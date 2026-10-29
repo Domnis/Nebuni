@@ -22,10 +22,12 @@ import com.domnis.nebuni.data.EphemerisData
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
-import com.domnis.nebuni.database.AppDatabase
+import com.domnis.nebuni.database.EphemerisDataDao
+import com.domnis.nebuni.database.ScienceMissionDao
 import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.network.ScienceAPI
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
@@ -34,9 +36,14 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.ExperimentalTime
 
-class ScienceMissionRepository(private val database: AppDatabase) {
+class ScienceMissionRepository(
+    private val scienceMissionDao: ScienceMissionDao,
+    private val ephemerisDataDao: EphemerisDataDao,
+    private val scienceAPI: ScienceAPI,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) {
     fun getScienceMissionFor(observationPlace: ObservationPlace): Flow<List<ScienceMission>> {
-        return database.getScienceMissionDao().getAllAsFlow(observationPlace.id)
+        return scienceMissionDao.getAllAsFlow(observationPlace.id)
     }
 
     @OptIn(ExperimentalTime::class)
@@ -46,14 +53,12 @@ class ScienceMissionRepository(private val database: AppDatabase) {
         endDate: String,
         canCleanDatabase: Boolean = false
     ) : Boolean {
-        val scienceAPI = ScienceAPI()
         val apiResult = scienceAPI.listScienceMissions(
             observationPlace = observationPlace,
             startDateTime = startTime,
             endDateTime = endDate
         ).filter { it.getMissionType() != ScienceMissionType.Unknown }
 
-        val scienceMissionDao = database.getScienceMissionDao()
         if (apiResult.isNotEmpty()) {
             if (canCleanDatabase) {
                 scienceMissionDao.clearAll(observationPlace.id)
@@ -63,7 +68,7 @@ class ScienceMissionRepository(private val database: AppDatabase) {
 
             // clean up ephemeris data for mission which no longer exist
             // not great as we'll clean data from possible next request
-            database.getEphemerisDataDao()
+            ephemerisDataDao
                 .clearEphemerisData(
                     apiResult.map { it.missionKey },
                     observationPlace.id
@@ -76,7 +81,7 @@ class ScienceMissionRepository(private val database: AppDatabase) {
                     it.getMissionType() == ScienceMissionType.CometaryActivity ||
                         it.getMissionType() == ScienceMissionType.PlanetaryDefense
                 }.map { mission ->
-                    async(Dispatchers.IO) {
+                    async(ioDispatcher) {
                         try {
                             if (mission.getMissionType() == ScienceMissionType.CometaryActivity) {
                                 getCometEphemerisData(mission)
@@ -100,13 +105,13 @@ class ScienceMissionRepository(private val database: AppDatabase) {
     suspend fun getCometEphemerisData(
         cometScienceMission: ScienceMission
     ) : List<EphemerisData> = getEphemerisData(cometScienceMission) { mission, from ->
-        ScienceAPI().getCometMissionsEphemeris(scienceMission = mission, fromStartDateTime = from)
+        scienceAPI.getCometMissionsEphemeris(scienceMission = mission, fromStartDateTime = from)
     }
 
     suspend fun getPlanetaryDefenseData(
         planetaryDefenseScienceMission: ScienceMission
     ) : List<EphemerisData> = getEphemerisData(planetaryDefenseScienceMission) { mission, from ->
-        ScienceAPI().getPlanetaryDefenseMissionsEphemeris(scienceMission = mission, fromStartDateTime = from)
+        scienceAPI.getPlanetaryDefenseMissionsEphemeris(scienceMission = mission, fromStartDateTime = from)
     }
 
     @OptIn(ExperimentalTime::class)
@@ -115,9 +120,8 @@ class ScienceMissionRepository(private val database: AppDatabase) {
         fetchFromApi: suspend (ScienceMission, String) -> List<EphemerisData>
     ) : List<EphemerisData> {
         val start = kotlin.time.Clock.System.now()
-        val ephemerisDao = database.getEphemerisDataDao()
 
-        val result = ephemerisDao.getAllEphemerisData(
+        val result = ephemerisDataDao.getAllEphemerisData(
             missionKey = scienceMission.missionKey,
             observationPlaceID = scienceMission.observationPlaceID,
             timestamp = start.toEpochMilliseconds()
@@ -126,14 +130,14 @@ class ScienceMissionRepository(private val database: AppDatabase) {
         if (result.isNotEmpty()) return result
 
         // no result => clear old data if any
-        ephemerisDao.clearAll(scienceMission.missionKey, scienceMission.observationPlaceID)
+        ephemerisDataDao.clearAll(scienceMission.missionKey, scienceMission.observationPlaceID)
 
         // get new data from API
         val apiResult = fetchFromApi(scienceMission, getCurrentDateAndTime(true))
 
         if (apiResult.isNotEmpty()) {
             // insert new data in DB if any
-            ephemerisDao.insertAll(apiResult)
+            ephemerisDataDao.insertAll(apiResult)
         }
 
         return apiResult
