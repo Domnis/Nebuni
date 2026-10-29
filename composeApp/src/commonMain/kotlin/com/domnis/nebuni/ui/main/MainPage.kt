@@ -80,7 +80,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.cd_back
+import nebuni.composeapp.generated.resources.cd_location
 import nebuni.composeapp.generated.resources.e911_emergency
+import nebuni.composeapp.generated.resources.main_mission_start
+import nebuni.composeapp.generated.resources.main_title
+import nebuni.composeapp.generated.resources.main_unknown_place
+import nebuni.composeapp.generated.resources.mission_priority_icon_description
 import nebuni.composeapp.generated.resources.mission_type_label
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -134,7 +140,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                     Text(
                         if (!isListAndDetailVisible && selectedMission != null)
                             selectedMission!!.target_name
-                        else "Nebuni",
+                        else stringResource(Res.string.main_title),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -148,7 +154,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "A back arrow icon"
+                                contentDescription = stringResource(Res.string.cd_back)
                             )
                         }
                     }
@@ -163,7 +169,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
 //                        ) {
 //                            Icon(
 //                                imageVector = Icons.Filled.Refresh,
-//                                contentDescription = "A refresh icon"
+//                                contentDescription = stringResource(Res.string.cd_refresh)
 //                            )
 //                        }
 //                    }
@@ -333,7 +339,7 @@ fun ListPaneHeaderCard(
         ) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
-                contentDescription = "A location icon"
+                contentDescription = stringResource(Res.string.cd_location)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -341,7 +347,7 @@ fun ListPaneHeaderCard(
             Text(
                 if (currentObservationPlaceConfigurationState == MainViewModel.ObservationPlaceConfigurationState.valid)
                     currentObservationPlace.name
-                else "???"
+                else stringResource(Res.string.main_unknown_place)
             )
         }
 
@@ -350,7 +356,7 @@ fun ListPaneHeaderCard(
 //        ) {
 //            Icon(
 //                imageVector = Icons.Filled.DateRange,
-//                contentDescription = "A date range icon"
+//                contentDescription = stringResource(Res.string.cd_date_range)
 //            )
 //
 //            Spacer(modifier = Modifier.width(8.dp))
@@ -393,7 +399,7 @@ fun ScienceMissionListItem(
                 if (mission.priority) {
                     Icon(
                         painter = painterResource(Res.drawable.e911_emergency),
-                        contentDescription = "A priority icon"
+                        contentDescription = stringResource(Res.string.mission_priority_icon_description)
                     )
                 }
 
@@ -410,7 +416,7 @@ fun ScienceMissionListItem(
             )
 
             Text(
-                "Start at: ${mission.getMissionStartDate()}",
+                stringResource(Res.string.main_mission_start, mission.getMissionStartDate()),
                 maxLines = 1
             )
         }

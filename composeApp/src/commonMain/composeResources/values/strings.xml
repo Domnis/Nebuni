@@ -58,4 +58,43 @@
     <string name="mission_event_info">Check event info on web site</string>
     <string name="mission_logo_description">Nebuni's logo</string>
     <string name="mission_empty">No mission is currently selected...\nChoose one on the side menu!</string>
+
+    <!-- Main page -->
+    <string name="main_title">Nebuni</string>
+    <string name="main_unknown_place">???</string>
+    <string name="main_mission_start">Start at: %1$s</string>
+    <string name="cd_back">A back arrow icon</string>
+    <string name="cd_refresh">A refresh icon</string>
+    <string name="cd_location">A location icon</string>
+    <string name="cd_date_range">A date range icon</string>
+
+    <!-- Splash screen -->
+    <string name="cd_app_logo">Nebuni's logo</string>
+
+    <!-- Observation place onboarding -->
+    <string name="onboarding_welcome">Welcome to Nebuni! 🐰</string>
+    <string name="onboarding_intro">Let's start by creating your first Observation Place!</string>
+    <string name="cd_info">An info icon</string>
+    <string name="onboarding_observation_place_info">Observation Place represents a geographic position associated with a "Visible Sky Area" (VSA).\nVSA is defined by a range of azimuth and altitude. (See Unistellar app for more details)</string>
+    <string name="onboarding_privacy">No worry, GPS coordinate of Observation Place will only be used when you'll ask a refresh of the mission's list. Observation Place are stored locally on your device.</string>
+
+    <!-- Observation place form -->
+    <string name="place_form_title">Create a new Observation Place</string>
+    <string name="place_form_name">Name</string>
+    <string name="place_form_name_hint">Home, Home - Balcony, etc...</string>
+    <string name="place_form_gps_coordinates">GPS Coordinates</string>
+    <string name="place_form_latitude">Latitude</string>
+    <string name="place_form_latitude_hint">Should be between -90° and 90°</string>
+    <string name="place_form_longitude">Longitude</string>
+    <string name="place_form_longitude_hint">Should be between -180° and 180°</string>
+    <string name="place_form_visible_sky_area">Visible Sky Area</string>
+    <string name="place_form_altitude_min">Altitude Min</string>
+    <string name="place_form_altitude_min_hint">Should be between 0° and 90°</string>
+    <string name="place_form_altitude_max">Altitude Max</string>
+    <string name="place_form_altitude_max_hint">Should be between 0° and 90° and bigger than Altitude Min</string>
+    <string name="place_form_azimuth_min">Azimuth Min</string>
+    <string name="place_form_azimuth_min_hint">Should be between 0° and 360°</string>
+    <string name="place_form_azimuth_max">Azimuth Max</string>
+    <string name="place_form_azimuth_max_hint">Should be between 0° and 360° and bigger than Azimuth Min</string>
+    <string name="place_form_submit">Create Observation Place</string>
 </resources>
