@@ -168,6 +168,17 @@ class ScienceMissionRepositoryTest {
     }
 
     @Test
+    fun refreshScienceMissions_throwingEphemerisFetchDoesNotFailRefreshNorOtherMissions() = runTest {
+        ephemerisDao.failingMissionKey = "bad"
+
+        val succeeded = routedRepository(twoMissionsJson).refreshScienceMissions(place, "start", "end")
+
+        assertTrue(succeeded)
+        assertEquals(setOf("good", "bad"), missionDao.missions.value.map { it.missionKey }.toSet())
+        assertEquals(setOf("good"), ephemerisDao.items.map { it.missionKey }.toSet())
+    }
+
+    @Test
     fun refreshScienceMissions_httpErrorReturnsFalseAndWritesNothing() = runTest {
         val succeeded = routedRepository(twoMissionsJson, HttpStatusCode.InternalServerError)
             .refreshScienceMissions(place, "start", "end", canCleanDatabase = true)

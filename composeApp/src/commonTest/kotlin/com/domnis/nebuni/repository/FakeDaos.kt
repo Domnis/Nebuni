@@ -33,9 +33,10 @@ class FakeScienceMissionDao : ScienceMissionDao {
         missions.map { list -> list.filter { it.observationPlaceID == observationPlaceID } }
 }
 
-/** In-memory [EphemerisDataDao]. */
+/** In-memory [EphemerisDataDao]; reads for [failingMissionKey] throw, to simulate a failing fetch. */
 class FakeEphemerisDataDao : EphemerisDataDao {
     val items = mutableListOf<EphemerisData>()
+    var failingMissionKey: String? = null
 
     override suspend fun insertAll(items: List<EphemerisData>) {
         this.items += items
@@ -53,8 +54,11 @@ class FakeEphemerisDataDao : EphemerisDataDao {
         missionKey: String,
         observationPlaceID: String,
         timestamp: Long
-    ): List<EphemerisData> = items.filter {
-        it.missionKey == missionKey && it.observationPlaceID == observationPlaceID &&
-            it.timestamp >= timestamp && it.timestamp <= timestamp + 36_000_000
+    ): List<EphemerisData> {
+        if (missionKey == failingMissionKey) throw IllegalStateException("ephemeris read failed for $missionKey")
+        return items.filter {
+            it.missionKey == missionKey && it.observationPlaceID == observationPlaceID &&
+                it.timestamp >= timestamp && it.timestamp <= timestamp + 36_000_000
+        }
     }
 }
