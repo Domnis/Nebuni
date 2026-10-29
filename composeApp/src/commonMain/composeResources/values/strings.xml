@@ -33,14 +33,6 @@
     <string name="error_azimuth_min_range">Azimuth Min should be between 0° and 360°</string>
     <string name="error_azimuth_max_range">Azimuth Max should be between 0° and 360° and bigger than Azimuth Min</string>
 
-    <!-- Science mission types -->
-    <string name="mission_type_asteroid_occultation">Asteroid occultations</string>
-    <string name="mission_type_cometary_activity">Cometary activity</string>
-    <string name="mission_type_exoplanet_transit">Exoplanet transits</string>
-    <string name="mission_type_planetary_defense">Planetary defense</string>
-    <string name="mission_type_satellite">Satellite</string>
-    <string name="mission_type_unknown">Unknown</string>
-
     <!-- Mission page -->
     <string name="mission_open_in_app_icon_description">Open in external app's icon</string>
     <string name="mission_open_in_app">Open in Unistellar app</string>
