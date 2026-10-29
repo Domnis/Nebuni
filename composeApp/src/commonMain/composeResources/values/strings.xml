@@ -19,6 +19,10 @@
     <string name="filter_date_today">Today</string>
     <string name="filter_date_next_3_days">Next 3 days</string>
 
+    <!-- Mission list grouping selector -->
+    <string name="grouping_date">By date</string>
+    <string name="grouping_type">By type</string>
+
     <!-- Observation place form validation errors -->
     <string name="error_latitude_format">Latitude is in incorrect format</string>
     <string name="error_latitude_range">Latitude should be between -90° and 90°</string>

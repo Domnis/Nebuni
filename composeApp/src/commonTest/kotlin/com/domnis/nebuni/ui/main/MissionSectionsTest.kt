@@ -19,6 +19,7 @@
 package com.domnis.nebuni.ui.main
 
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.parseDateToInstant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -133,5 +134,82 @@ class MissionSectionsTest {
         assertEquals(listOf(today, "2026-10-30"), sections.map { it.date })
         assertEquals(listOf(true, false), sections.map { it.isToday })
         assertEquals(listOf(listOf("occultation"), listOf("comet")), sections.keys())
+    }
+
+    @Test
+    fun groupByTypeOfEmptyInputGivesNoSection() {
+        assertTrue(groupMissionsByType(emptyList()).isEmpty())
+    }
+
+    @Test
+    fun groupByTypeGivesOneSectionPerPresentTypeInDeclarationOrder() {
+        val sections = groupMissionsByType(
+            listOf(
+                mission("satellite", "2026-10-27", pipelineType = "s"),
+                mission("comet", "2026-10-28", pipelineType = "c"),
+                mission("occultation", "2026-10-29", pipelineType = "o"),
+                mission("comet2", "2026-10-26", pipelineType = "c"),
+            )
+        )
+
+        assertEquals(
+            listOf(
+                ScienceMissionType.AsteroidOccultation,
+                ScienceMissionType.CometaryActivity,
+                ScienceMissionType.Satellite,
+            ),
+            sections.map { it.type }
+        )
+        assertEquals(listOf(listOf("occultation"), listOf("comet2", "comet"), listOf("satellite")), sections.keys())
+        assertTrue(sections.none { it.isToday })
+    }
+
+    @Test
+    fun groupByTypeSortsMissionsByStartTimeInsideEachSection() {
+        val sections = groupMissionsByType(
+            listOf(
+                mission("c", "2026-10-30"),
+                mission("a", "2026-10-20"),
+                mission("b", "2026-10-25"),
+            )
+        )
+
+        assertEquals(
+            listOf(
+                MissionSection(
+                    date = "",
+                    isToday = false,
+                    missions = listOf(
+                        mission("a", "2026-10-20"),
+                        mission("b", "2026-10-25"),
+                        mission("c", "2026-10-30"),
+                    ),
+                    type = ScienceMissionType.AsteroidOccultation
+                )
+            ),
+            sections
+        )
+    }
+
+    @Test
+    fun groupByTypeKeepsOnlyFilteredTypes() {
+        val missions = listOf(
+            mission("occultation", "2026-10-27", pipelineType = "o"),
+            mission("transit", "2026-10-28", pipelineType = "e"),
+        )
+
+        val sections = groupMissionsByType(
+            filterMissions(missions, MissionFilter(setOf(ScienceMissionType.ExoplanetTransit)), today, now)
+        )
+
+        assertEquals(listOf(ScienceMissionType.ExoplanetTransit), sections.map { it.type })
+        assertEquals(listOf(listOf("transit")), sections.keys())
+    }
+
+    @Test
+    fun groupByDaySectionsHaveNoType() {
+        val sections = groupMissionsByDay(listOf(mission("a", "2026-10-28")), today, now)
+
+        assertEquals(listOf(null), sections.map { it.type })
     }
 }

@@ -106,6 +106,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
 
     val missionFilter by mainViewModel.filter
     val availableMissionTypes by mainViewModel.availableTypes
+    val missionGrouping by mainViewModel.grouping
 
     var startDateTime by mainViewModel.startTime
     var endDateTime by mainViewModel.endTime
@@ -217,6 +218,8 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     onToggleType = { type -> mainViewModel.toggleType(type) },
                                     onTogglePriorityOnly = { mainViewModel.togglePriorityOnly() },
                                     onSelectDateRange = { dateRange -> mainViewModel.selectDateRange(dateRange) },
+                                    grouping = missionGrouping,
+                                    onSelectGrouping = { grouping -> mainViewModel.selectGrouping(grouping) },
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
                             }

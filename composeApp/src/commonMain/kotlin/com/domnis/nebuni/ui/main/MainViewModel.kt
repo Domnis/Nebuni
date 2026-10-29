@@ -60,6 +60,7 @@ class MainViewModel(
     // In memory only: kept by the ViewModel across configuration changes, not persisted.
     var filter = mutableStateOf(MissionFilter())
     var availableTypes = mutableStateOf<List<MissionTypeCount>>(emptyList())
+    var grouping = mutableStateOf(Grouping.Date)
 
     var startTime = mutableStateOf(getCurrentDateAndTime())
     var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
@@ -78,15 +79,22 @@ class MainViewModel(
                             .combine(snapshotFlow { filter.value }) { missions, filter ->
                                 missions to filter
                             }
-                            .collect { (missions, filter) ->
+                            .combine(snapshotFlow { grouping.value }) { (missions, filter), grouping ->
+                                Triple(missions, filter, grouping)
+                            }
+                            .collect { (missions, filter, grouping) ->
                                 availableTypes.value = countMissionTypes(missions)
                                 val today = getCurrentDate(TimeZone.currentSystemDefault())
                                 val nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
-                                scienceMissionList.value = groupMissionsByDay(
-                                    filterMissions(missions, filter, today, nowEpochMillis),
-                                    today = today,
-                                    nowEpochMillis = nowEpochMillis
-                                )
+                                val filteredMissions = filterMissions(missions, filter, today, nowEpochMillis)
+                                scienceMissionList.value = when (grouping) {
+                                    Grouping.Date -> groupMissionsByDay(
+                                        filteredMissions,
+                                        today = today,
+                                        nowEpochMillis = nowEpochMillis
+                                    )
+                                    Grouping.Type -> groupMissionsByType(filteredMissions)
+                                }
                             }
                     }
                 }
@@ -181,6 +189,10 @@ class MainViewModel(
 
     fun selectDateRange(dateRange: DateRange) {
         filter.value = filter.value.copy(dateRange = dateRange)
+    }
+
+    fun selectGrouping(newGrouping: Grouping) {
+        grouping.value = newGrouping
     }
 
     fun clearFilters() {

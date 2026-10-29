@@ -21,11 +21,36 @@ package com.domnis.nebuni.ui.main
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
 
+/** How the mission list is split into sections. */
+enum class Grouping {
+    Date,
+    Type
+}
+
+/**
+ * A section of the mission list. Sections built by [groupMissionsByType] carry their [type]
+ * (and an empty [date]), so the UI resolves their title from string resources.
+ */
 data class MissionSection(
     val date: String,
     val isToday: Boolean,
-    val missions: List<ScienceMission>
+    val missions: List<ScienceMission>,
+    val type: ScienceMissionType? = null
 )
+
+/**
+ * Groups [missions] into one section per [ScienceMissionType] present, ordered by
+ * [ScienceMissionType] declaration order, with missions sorted by start time in each section.
+ */
+fun groupMissionsByType(missions: List<ScienceMission>): List<MissionSection> =
+    missions
+        .sortedBy { it.getMissionStartTimestamp() }
+        .groupBy { it.getMissionType() }
+        .toList()
+        .sortedBy { (type, _) -> type.ordinal }
+        .map { (type, sectionMissions) ->
+            MissionSection(date = "", isToday = false, missions = sectionMissions, type = type)
+        }
 
 /**
  * Sorts [missions] by start time and groups them into consecutive sections by local start date.

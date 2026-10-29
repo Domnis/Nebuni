@@ -144,7 +144,11 @@ fun ListPaneValidPage(
             scienceMissionList.forEach { section ->
                 stickyHeader {
                     Text(
-                        if (section.isToday) stringResource(Res.string.section_today) else section.date,
+                        when {
+                            section.type != null -> stringResource(section.type.labelResource())
+                            section.isToday -> stringResource(Res.string.section_today)
+                            else -> section.date
+                        },
                         modifier = Modifier.fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
                             .padding(top = 20.dp, bottom = 8.dp),

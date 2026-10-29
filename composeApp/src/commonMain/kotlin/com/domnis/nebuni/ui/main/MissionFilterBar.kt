@@ -20,6 +20,7 @@ package com.domnis.nebuni.ui.main
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -27,7 +28,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.data.ScienceMissionType
@@ -38,6 +41,8 @@ import nebuni.composeapp.generated.resources.filter_date_all
 import nebuni.composeapp.generated.resources.filter_date_next_3_days
 import nebuni.composeapp.generated.resources.filter_date_today
 import nebuni.composeapp.generated.resources.filter_priority
+import nebuni.composeapp.generated.resources.grouping_date
+import nebuni.composeapp.generated.resources.grouping_type
 import nebuni.composeapp.generated.resources.mission_type_asteroid_occultation
 import nebuni.composeapp.generated.resources.mission_type_cometary_activity
 import nebuni.composeapp.generated.resources.mission_type_exoplanet_transit
@@ -49,8 +54,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Horizontally scrollable row with a priority chip, single-select date range chips and
- * one filter chip per mission type in [availableTypes].
+ * Horizontally scrollable row with a priority chip, single-select date range chips,
+ * one filter chip per mission type in [availableTypes], and a Date/Type grouping selector.
  */
 @Composable
 fun MissionFilterBar(
@@ -59,11 +64,14 @@ fun MissionFilterBar(
     onToggleType: (ScienceMissionType) -> Unit,
     onTogglePriorityOnly: () -> Unit,
     onSelectDateRange: (DateRange) -> Unit,
+    grouping: Grouping,
+    onSelectGrouping: (Grouping) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         item(key = "priority") {
             FilterChip(
@@ -103,6 +111,18 @@ fun MissionFilterBar(
                 }
             )
         }
+
+        item(key = "grouping_divider") {
+            VerticalDivider(modifier = Modifier.height(24.dp))
+        }
+
+        items(Grouping.entries, key = { "grouping_${it.name}" }) { option ->
+            FilterChip(
+                selected = option == grouping,
+                onClick = { onSelectGrouping(option) },
+                label = { Text(stringResource(option.labelResource())) }
+            )
+        }
     }
 }
 
@@ -110,6 +130,11 @@ fun DateRange.labelResource(): StringResource = when (this) {
     DateRange.All -> Res.string.filter_date_all
     DateRange.Today -> Res.string.filter_date_today
     DateRange.Next3Days -> Res.string.filter_date_next_3_days
+}
+
+fun Grouping.labelResource(): StringResource = when (this) {
+    Grouping.Date -> Res.string.grouping_date
+    Grouping.Type -> Res.string.grouping_type
 }
 
 fun ScienceMissionType.labelResource(): StringResource = when (this) {
