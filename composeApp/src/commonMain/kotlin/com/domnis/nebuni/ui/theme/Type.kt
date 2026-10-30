@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.sp
 import nebuni.composeapp.generated.resources.DeliusSwashCaps_Regular
 import nebuni.composeapp.generated.resources.Res
@@ -33,23 +34,38 @@ import org.jetbrains.compose.resources.Font
 // Default Material 3 typography values
 val baseline = Typography()
 
+// The bundled fonts are Latin-only: these languages use the platform font, which has their glyphs.
+private val systemFontLanguages = setOf("ja")
+
+internal fun usesBundledFonts(language: String): Boolean = language.lowercase() !in systemFontLanguages
+
 @Composable
 fun appTypography(): Typography {
-    val displayFontFamily = FontFamily(
-        Font(
-            Res.font.DeliusSwashCaps_Regular,
-        )
-    )
+    val bundledFonts = usesBundledFonts(Locale.current.language)
 
-    val bodyFontFamily = FontFamily(
-        Font(
-            Res.font.exo2_variablefont_wght,
-        ),
-        Font(
-            Res.font.exo2_italic_variablefont_wght,
-            style = FontStyle.Italic
+    val displayFontFamily = if (bundledFonts) {
+        FontFamily(
+            Font(
+                Res.font.DeliusSwashCaps_Regular,
+            )
         )
-    )
+    } else {
+        FontFamily.Default
+    }
+
+    val bodyFontFamily = if (bundledFonts) {
+        FontFamily(
+            Font(
+                Res.font.exo2_variablefont_wght,
+            ),
+            Font(
+                Res.font.exo2_italic_variablefont_wght,
+                style = FontStyle.Italic
+            )
+        )
+    } else {
+        FontFamily.Default
+    }
 
     return Typography(
         displayLarge = baseline.displayLarge.copy(fontFamily = displayFontFamily),
