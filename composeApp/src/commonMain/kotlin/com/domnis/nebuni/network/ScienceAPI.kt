@@ -86,12 +86,23 @@ class ScienceAPI(
             return emptyList()
         }
 
+        val lat: String
+        val lng: String
+        try {
+            val coordinates = args.loc.split(",")
+            lat = coordinates[0]
+            lng = coordinates[1]
+        } catch (e: IndexOutOfBoundsException) {
+            println("science api malformed ephemeris_args.loc: '${args.loc}'")
+            return emptyList()
+        }
+
         val body = postForm {
             append("action", "get-ephemerid")
             append("name", args.name)
             append("date", fromStartDateTime.ifEmpty { args.tstart })
-            append("lat", args.loc.split(",")[0])
-            append("lng", args.loc.split(",")[1])
+            append("lat", lat)
+            append("lng", lng)
             append("step", "$step")
             append("duration", args.duration.split(".")[0])
             append("et", args.exp_time.split(".")[0])

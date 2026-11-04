@@ -160,6 +160,18 @@ class ScienceAPITest {
     }
 
     @Test
+    fun getMissionsEphemeris_malformedLocGivesEmptyListWithoutRequest() = runTest {
+        var requestCount = 0
+        val api = api { requestCount++; respondJson(ephemerisJson) }
+        for (loc in listOf("", "43.28")) {
+            val bad = mission.copy(ephemeris_args = mission.ephemeris_args!!.copy(loc = loc))
+            assertEquals(emptyList(), api.getCometMissionsEphemeris(bad, ""), loc)
+            assertEquals(emptyList(), api.getPlanetaryDefenseMissionsEphemeris(bad, ""), loc)
+        }
+        assertEquals(0, requestCount)
+    }
+
+    @Test
     fun getCometMissionsEphemeris_cancellationIsRethrown() = runTest {
         assertFailsWith<CancellationException> {
             api { throw CancellationException("cancelled") }.getCometMissionsEphemeris(mission, "")
