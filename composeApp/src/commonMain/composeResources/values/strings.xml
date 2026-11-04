@@ -67,6 +67,7 @@
     <string name="cd_refresh">A refresh icon</string>
     <string name="cd_location">A location icon</string>
     <string name="cd_date_range">A date range icon</string>
+    <string name="main_date_range">%1$s -> %2$s</string>
 
     <!-- Splash screen -->
     <string name="cd_app_logo">Nebuni's logo</string>

@@ -82,6 +82,7 @@
     <string name="cd_refresh">更新アイコン</string>
     <string name="cd_location">位置アイコン</string>
     <string name="cd_date_range">日付範囲アイコン</string>
+    <string name="main_date_range">%1$s -> %2$s</string>
 
     <!-- Splash screen -->
     <string name="cd_app_logo">Nebuniのロゴ</string>

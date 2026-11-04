@@ -362,11 +362,11 @@ fun ListPaneHeaderCard(
 //            Spacer(modifier = Modifier.width(8.dp))
 //
 //            Text(
-//                convertCurrentDateAndTimeToLocalTimeZone(startDateTime) +
-//                        " -> " +
-//                        convertCurrentDateAndTimeToLocalTimeZone(
-//                            endDateTime
-//                        )
+//                stringResource(
+//                    Res.string.main_date_range,
+//                    convertCurrentDateAndTimeToLocalTimeZone(startDateTime),
+//                    convertCurrentDateAndTimeToLocalTimeZone(endDateTime)
+//                )
 //            )
 //        }
 
