@@ -82,6 +82,7 @@
     <string name="cd_refresh">Une icône d’actualisation</string>
     <string name="cd_location">Une icône de localisation</string>
     <string name="cd_date_range">Une icône de plage de dates</string>
+    <string name="main_date_range">%1$s -> %2$s</string>
 
     <!-- Splash screen -->
     <string name="cd_app_logo">Logo de Nebuni</string>
