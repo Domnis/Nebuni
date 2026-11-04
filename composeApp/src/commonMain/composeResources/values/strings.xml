@@ -82,6 +82,7 @@
     <!-- Observation place form -->
     <string name="place_form_title">Create a new Observation Place</string>
     <string name="place_form_name">Name</string>
+    <string name="place_form_default_name">New Place 01</string>
     <string name="place_form_name_hint">Home, Home - Balcony, etc...</string>
     <string name="place_form_gps_coordinates">GPS Coordinates</string>
     <string name="place_form_latitude">Latitude</string>

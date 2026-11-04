@@ -87,6 +87,7 @@ import nebuni.composeapp.generated.resources.place_form_azimuth_max
 import nebuni.composeapp.generated.resources.place_form_azimuth_max_hint
 import nebuni.composeapp.generated.resources.place_form_azimuth_min
 import nebuni.composeapp.generated.resources.place_form_azimuth_min_hint
+import nebuni.composeapp.generated.resources.place_form_default_name
 import nebuni.composeapp.generated.resources.place_form_gps_coordinates
 import nebuni.composeapp.generated.resources.place_form_latitude
 import nebuni.composeapp.generated.resources.place_form_latitude_hint
@@ -255,7 +256,9 @@ fun ListPaneInvalidFormPage(
     appState: AppState = koinInject(),
     mainViewModel: MainViewModel = koinViewModel(),
 ) {
-    val nameState = rememberTextFieldState(initialText = appState.currentObservationPlace.value.name)
+    val nameState = rememberTextFieldState(
+        initialText = appState.currentObservationPlace.value.name.ifBlank { stringResource(Res.string.place_form_default_name) },
+    )
 
     val latState = rememberTextFieldState(initialText = appState.currentObservationPlace.value.latitude.toString())
     val lonState = rememberTextFieldState(initialText = appState.currentObservationPlace.value.longitude.toString())

@@ -97,6 +97,7 @@
     <!-- Observation place form -->
     <string name="place_form_title">Créer un nouveau Lieu d’observation</string>
     <string name="place_form_name">Nom</string>
+    <string name="place_form_default_name">Nouveau lieu 01</string>
     <string name="place_form_name_hint">Maison, Maison - Balcon, etc.</string>
     <string name="place_form_gps_coordinates">Coordonnées GPS</string>
     <string name="place_form_latitude">Latitude</string>

@@ -97,6 +97,7 @@
     <!-- Observation place form -->
     <string name="place_form_title">新しい観測地を作成</string>
     <string name="place_form_name">名前</string>
+    <string name="place_form_default_name">新しい場所 01</string>
     <string name="place_form_name_hint">自宅、自宅 - バルコニーなど</string>
     <string name="place_form_gps_coordinates">GPS座標</string>
     <string name="place_form_latitude">緯度</string>

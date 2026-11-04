@@ -97,6 +97,7 @@
     <!-- Observation place form -->
     <string name="place_form_title">Neuen Beobachtungsort anlegen</string>
     <string name="place_form_name">Name</string>
+    <string name="place_form_default_name">Neuer Ort 01</string>
     <string name="place_form_name_hint">Zuhause, Zuhause - Balkon usw.</string>
     <string name="place_form_gps_coordinates">GPS-Koordinaten</string>
     <string name="place_form_latitude">Breitengrad</string>
