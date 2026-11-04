@@ -25,7 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import com.domnis.nebuni.ui.main.MainPage
 import com.domnis.nebuni.ui.splash.SplashView
 import com.domnis.nebuni.ui.theme.NebuniTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinMultiplatformApplication
 import org.koin.compose.koinInject
 import org.koin.core.annotation.KoinExperimentalAPI
