@@ -23,6 +23,7 @@ import com.domnis.nebuni.database.getRoomDatabase
 import com.domnis.nebuni.network.ScienceAPI
 import com.domnis.nebuni.repository.ScienceMissionRepository
 import com.domnis.nebuni.ui.main.MainViewModel
+import com.domnis.nebuni.ui.missions.MissionViewModel
 import com.domnis.nebuni.ui.splash.SplashViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
@@ -43,6 +44,7 @@ val appModule = module {
     }
     viewModelOf(::SplashViewModel)
     viewModelOf(::MainViewModel)
+    viewModelOf(::MissionViewModel)
 }
 
 val databaseModule = module {
