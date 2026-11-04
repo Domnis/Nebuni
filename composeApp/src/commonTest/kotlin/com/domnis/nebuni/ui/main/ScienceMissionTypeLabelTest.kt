@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.domnis.nebuni.ui.missions
+package com.domnis.nebuni.ui.main
 
 import com.domnis.nebuni.data.ScienceMissionType
 import kotlin.test.Test
@@ -28,13 +28,13 @@ class ScienceMissionTypeLabelTest {
     @Test
     fun everyMissionTypeHasAStringResource() {
         ScienceMissionType.entries.forEach { type ->
-            assertTrue(type.label.key.startsWith("mission_type_"), "Unexpected resource for $type")
+            assertTrue(type.labelResource().key.startsWith("mission_type_"), "Unexpected resource for $type")
         }
     }
 
     @Test
     fun everyMissionTypeMapsToADistinctStringResource() {
-        val labels = ScienceMissionType.entries.map { it.label }
+        val labels = ScienceMissionType.entries.map { it.labelResource() }
         assertEquals(labels.size, labels.toSet().size)
     }
 }
