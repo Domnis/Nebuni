@@ -48,10 +48,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,13 +60,8 @@ import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.data.EphemerisData
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
-import com.domnis.nebuni.repository.ScienceMissionRepository
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.e911_emergency
 import nebuni.composeapp.generated.resources.mission_alt_az
@@ -95,7 +88,7 @@ import nebuni.composeapp.generated.resources.nebuni
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalTime::class)
@@ -103,7 +96,8 @@ import kotlin.time.ExperimentalTime
 @Preview
 fun MissionPage(
     mission: ScienceMission,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    missionViewModel: MissionViewModel = koinViewModel()
 ) {
     Box(
         modifier = modifier
@@ -111,33 +105,12 @@ fun MissionPage(
             .padding(horizontal = 8.dp),
         contentAlignment = Alignment.TopStart,
     ) {
-        var missionEphemerisData by remember { mutableStateOf(listOf<EphemerisData>()) }
-        var isLoadingEphemerisData by remember { mutableStateOf(false) }
-        val scienceMissionRepository: ScienceMissionRepository = koinInject()
+        val ephemerisState by missionViewModel.ephemerisState.collectAsState()
+        val missionEphemerisData = ephemerisState.ephemerisData
+        val isLoadingEphemerisData = ephemerisState.isLoading
 
         LaunchedEffect(mission) {
-            if (
-                mission.getMissionType() == ScienceMissionType.CometaryActivity
-                || mission.getMissionType() == ScienceMissionType.PlanetaryDefense
-            ) {
-                isLoadingEphemerisData = true
-                missionEphemerisData = listOf()
-                coroutineScope {
-                    async(Dispatchers.IO) {
-                        missionEphemerisData =
-                            if (mission.getMissionType() == ScienceMissionType.CometaryActivity) {
-                                scienceMissionRepository.getCometEphemerisData(
-                                    cometScienceMission = mission
-                                )
-                            } else {
-                                scienceMissionRepository.getPlanetaryDefenseData(
-                                    planetaryDefenseScienceMission = mission
-                                )
-                            }
-                        isLoadingEphemerisData = false
-                    }
-                }
-            }
+            missionViewModel.loadEphemeris(mission)
         }
 
         if (mission.getMissionType() == ScienceMissionType.Unknown) {
