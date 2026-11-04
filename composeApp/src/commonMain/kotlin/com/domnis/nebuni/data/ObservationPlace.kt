@@ -26,7 +26,7 @@ import kotlin.uuid.Uuid
 @Entity
 data class ObservationPlace @OptIn(ExperimentalUuidApi::class) constructor(
     @PrimaryKey val id: String = Uuid.random().toString(),
-    val name: String = "New Place 01",
+    val name: String = "", // blank: the UI supplies a localized default name
     val latitude: Double = 43.284055, // Notre-Dame de la Garde's latitude
     val longitude: Double = 5.371309, // Notre-Dame de la Garde's longitude
     val altMin: Int = 0,
