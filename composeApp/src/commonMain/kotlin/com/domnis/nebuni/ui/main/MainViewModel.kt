@@ -61,6 +61,9 @@ class MainViewModel(
     var scienceMissionList = mutableStateOf<List<MissionSection>>(emptyList())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
 
+    /** Every saved place, sorted by name, for the place switcher. */
+    var places = mutableStateOf<List<ObservationPlace>>(emptyList())
+
     // In memory only: kept by the ViewModel across configuration changes, not persisted.
     var filter = mutableStateOf(MissionFilter())
     var availableTypes = mutableStateOf<List<MissionTypeCount>>(emptyList())
@@ -100,6 +103,10 @@ class MainViewModel(
                 .filterNotNull()
                 .distinctUntilChangedBy { it.refreshKey() }
                 .collect { place -> onPlaceChanged(place) }
+        }
+
+        viewModelScope.launch {
+            observationPlaceRepository.places().collect { places.value = it }
         }
     }
 

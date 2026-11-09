@@ -68,6 +68,7 @@ class MainViewModelTest {
     /** [respond] answers a mission list request; it receives the latitude and its index for that latitude. */
     private fun TestScope.viewModel(
         placeRepository: ObservationPlaceRepository,
+        missionDao: FakeScienceMissionDao = FakeScienceMissionDao(),
         respond: suspend MockRequestHandleScope.(latitude: String, index: Int) -> HttpResponseData = { _, _ ->
             respond("{}", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }
@@ -75,7 +76,7 @@ class MainViewModelTest {
         appState = appState,
         observationPlaceRepository = placeRepository,
         scienceMissionRepository = ScienceMissionRepository(
-            scienceMissionDao = FakeScienceMissionDao(),
+            scienceMissionDao = missionDao,
             ephemerisDataDao = FakeEphemerisDataDao(),
             scienceAPI = ScienceAPI(HttpClient(MockEngine { request ->
                 val body = request.body.toByteArray().decodeToString()
@@ -177,6 +178,44 @@ class MainViewModelTest {
         assertEquals(listOf("1.0", "1.0", "1.0", "1.0", "2.0"), requests.first { it.size == 5 })
         assertEquals(placeB.id, appState.currentObservationPlace.value.id)
         assertNull(viewModel.selectedMission.value)
+    }
+
+    @Test
+    fun exposesEveryPlaceSortedByName() = runTest {
+        val placeC = ObservationPlace(id = "c", name = "c place", latitude = 3.0)
+        val viewModel = viewModel(placeRepository(FakeObservationPlaceDao(listOf(placeB, placeC, placeA))))
+        advanceUntilIdle()
+
+        assertEquals(listOf("a", "b", "c"), viewModel.places.value.map { it.id })
+    }
+
+    @Test
+    fun selectingAPlaceOfflineShowsItsCachedMissionsAtOnce() = runTest {
+        val missionDao = FakeScienceMissionDao()
+        missionDao.missions.value = listOf(
+            ScienceMission(missionKey = "mA", observationPlaceID = "a", pipeline_type = "o", tstart = "2026-10-27"),
+            ScienceMission(missionKey = "mB", observationPlaceID = "b", pipeline_type = "o", tstart = "2026-10-27")
+        )
+        // offline: every request fails
+        val viewModel = viewModel(placeRepository(FakeObservationPlaceDao(listOf(placeA, placeB))), missionDao) { _, _ ->
+            respond("", HttpStatusCode.ServiceUnavailable)
+        }
+        viewModel.awaitMissionKeys(listOf("mA"))
+
+        viewModel.selectPlace("b")
+
+        viewModel.awaitMissionKeys(listOf("mB"))
+        assertEquals(placeB.id, appState.currentObservationPlace.value.id)
+        viewModel.isLoadingMissionsSettled()
+        // the failed refresh keeps the cache
+        assertEquals(listOf("mB"), viewModel.missionKeys())
+    }
+
+    private fun MainViewModel.missionKeys() = scienceMissionList.value.flatMap { it.missions }.map { it.missionKey }
+
+    /** Waits for the shown missions to be [keys]: the HTTP engine runs on its own threads. */
+    private suspend fun MainViewModel.awaitMissionKeys(keys: List<String>) = withContext(Dispatchers.Default) {
+        while (missionKeys() != keys) delay(10)
     }
 
     /** Waits for the current refresh to answer: the HTTP engine runs on its own threads. */
