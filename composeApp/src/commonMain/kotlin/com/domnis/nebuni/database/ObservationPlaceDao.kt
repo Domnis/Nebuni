@@ -40,6 +40,9 @@ interface ObservationPlaceDao {
     @Query("SELECT * FROM ObservationPlace ORDER BY lastSelectedAt DESC, rowid ASC LIMIT 1")
     fun getSelectedAsFlow(): Flow<ObservationPlace?>
 
+    @Query("SELECT * FROM ObservationPlace WHERE id = :id")
+    suspend fun getById(id: String): ObservationPlace?
+
     @Query("UPDATE ObservationPlace SET lastSelectedAt = :now WHERE id = :id")
     suspend fun markSelected(id: String, now: Long)
 
