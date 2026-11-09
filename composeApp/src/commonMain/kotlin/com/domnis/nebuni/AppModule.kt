@@ -27,6 +27,7 @@ import com.domnis.nebuni.ui.main.MainViewModel
 import com.domnis.nebuni.ui.missions.MissionViewModel
 import com.domnis.nebuni.ui.splash.SplashViewModel
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -45,7 +46,7 @@ val appModule = module {
     }
     single { ObservationPlaceRepository(get<AppDatabase>().getObservationPlaceDao()) }
     viewModelOf(::SplashViewModel)
-    viewModelOf(::MainViewModel)
+    viewModel { MainViewModel(get(), get(), get()) }
     viewModelOf(::MissionViewModel)
 }
 
