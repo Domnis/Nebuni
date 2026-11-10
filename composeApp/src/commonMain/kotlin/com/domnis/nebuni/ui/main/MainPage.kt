@@ -112,6 +112,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
     var isLoadingMissions by mainViewModel.isLoadingMissions
     var isListAndDetailVisible by remember { mutableStateOf(false) }
     var isPlaceSwitcherVisible by remember { mutableStateOf(false) }
+    var isAddPlaceFormVisible by remember { mutableStateOf(false) }
 
     var scienceMissionList by mainViewModel.scienceMissionList
     var selectedMission by mainViewModel.selectedMission
@@ -198,8 +199,25 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                         if (!sheetState.isVisible) isPlaceSwitcherVisible = false
                     }
                 },
+                onAddPlace = {
+                    isPlaceSwitcherVisible = false
+                    isAddPlaceFormVisible = true
+                },
                 onDismissRequest = { isPlaceSwitcherVisible = false },
                 sheetState = sheetState
+            )
+        }
+
+        if (isAddPlaceFormVisible) {
+            ObservationPlaceFormDialog(
+                // pre-filled from the current place; the blank name makes the form use its default name
+                initial = currentObservationPlace.asNewPlaceTemplate(),
+                mode = ObservationPlaceFormMode.Create,
+                onDismissRequest = { isAddPlaceFormVisible = false },
+                onSubmit = { place ->
+                    mainViewModel.addObservationPlace(place)
+                    isAddPlaceFormVisible = false
+                }
             )
         }
 
