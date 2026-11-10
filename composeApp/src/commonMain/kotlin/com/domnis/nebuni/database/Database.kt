@@ -36,7 +36,7 @@ import kotlinx.coroutines.IO
 internal const val DB_FILE_NAME = "nebuni.db"
 
 @Database(
-    version = 5,
+    version = 6,
     entities = [ObservationPlace::class, ScienceMission::class, EphemerisData::class],
     exportSchema = true,
     autoMigrations = [
@@ -44,6 +44,7 @@ internal const val DB_FILE_NAME = "nebuni.db"
         AutoMigration(2, 3),
         AutoMigration(3, 4),
         AutoMigration(4, 5),
+        AutoMigration(5, 6),
     ],
 )
 @ConstructedBy(AppDatabaseConstructor::class)
