@@ -326,7 +326,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Top
                                 ) {
-                                    ListPaneInvalidFormPage()
+                                    OnboardingObservationPlaceForm()
                                 }
                             }
                         } else if (selectedMission == null) {
