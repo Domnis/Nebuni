@@ -78,6 +78,14 @@
     <string name="main_title">Nebuni</string>
     <string name="main_unknown_place">???</string>
     <string name="main_mission_start">開始：%1$s</string>
+    <string name="place_switcher_title">観測地</string>
+    <string name="place_switcher_change">観測地を変更</string>
+    <string name="place_coordinates">%1$s、%2$s</string>
+    <string name="place_lat_north">北緯 %1$s°</string>
+    <string name="place_lat_south">南緯 %1$s°</string>
+    <string name="place_lon_east">東経 %1$s°</string>
+    <string name="place_lon_west">西経 %1$s°</string>
+    <string name="main_no_mission_for_place">今後数日間、%1$s のミッションはありません。下に引いて更新してください。</string>
     <string name="cd_back">戻る矢印アイコン</string>
     <string name="cd_refresh">更新アイコン</string>
     <string name="cd_location">位置アイコン</string>

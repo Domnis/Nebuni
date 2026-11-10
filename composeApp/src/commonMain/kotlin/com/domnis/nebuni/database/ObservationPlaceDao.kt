@@ -21,6 +21,8 @@ package com.domnis.nebuni.database
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import com.domnis.nebuni.data.ObservationPlace
 import kotlinx.coroutines.flow.Flow
 
@@ -32,6 +34,39 @@ interface ObservationPlaceDao {
     @Query("SELECT count(*) FROM ObservationPlace")
     suspend fun count(): Int
 
-    @Query("SELECT * FROM ObservationPlace")
+    @Query("SELECT * FROM ObservationPlace ORDER BY name COLLATE NOCASE")
     fun getAllAsFlow(): Flow<List<ObservationPlace>>
+
+    @Query("SELECT * FROM ObservationPlace ORDER BY lastSelectedAt DESC, rowid ASC LIMIT 1")
+    fun getSelectedAsFlow(): Flow<ObservationPlace?>
+
+    @Query("SELECT * FROM ObservationPlace WHERE id = :id")
+    suspend fun getById(id: String): ObservationPlace?
+
+    @Query("UPDATE ObservationPlace SET lastSelectedAt = :now WHERE id = :id")
+    suspend fun markSelected(id: String, now: Long)
+
+    @Update
+    suspend fun update(place: ObservationPlace)
+
+    @Query("DELETE FROM ScienceMission WHERE observationPlaceID = :id")
+    suspend fun deleteMissionsOf(id: String)
+
+    @Query("DELETE FROM EphemerisData WHERE observationPlaceID = :id")
+    suspend fun deleteEphemeridesOf(id: String)
+
+    @Query("DELETE FROM ObservationPlace WHERE id = :id")
+    suspend fun delete(id: String)
+
+    @Transaction
+    suspend fun clearCache(id: String) {
+        deleteEphemeridesOf(id)
+        deleteMissionsOf(id)
+    }
+
+    @Transaction
+    suspend fun deleteWithCache(id: String) {
+        clearCache(id)
+        delete(id)
+    }
 }

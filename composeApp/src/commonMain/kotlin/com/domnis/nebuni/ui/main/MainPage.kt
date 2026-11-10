@@ -20,6 +20,7 @@ package com.domnis.nebuni.ui.main
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,7 @@ import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -56,6 +58,7 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,7 +69,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
@@ -87,6 +92,7 @@ import nebuni.composeapp.generated.resources.main_title
 import nebuni.composeapp.generated.resources.main_unknown_place
 import nebuni.composeapp.generated.resources.mission_priority_icon_description
 import nebuni.composeapp.generated.resources.mission_type_label
+import nebuni.composeapp.generated.resources.place_switcher_change
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -105,6 +111,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
 
     var isLoadingMissions by mainViewModel.isLoadingMissions
     var isListAndDetailVisible by remember { mutableStateOf(false) }
+    var isPlaceSwitcherVisible by remember { mutableStateOf(false) }
 
     var scienceMissionList by mainViewModel.scienceMissionList
     var selectedMission by mainViewModel.selectedMission
@@ -178,6 +185,23 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
     ) { paddingValues ->
         val currentObservationPlaceConfigurationState by mainViewModel.currentObservationPlaceConfigurationState
         val currentObservationPlace by appState.currentObservationPlace
+        val places by mainViewModel.places
+
+        if (isPlaceSwitcherVisible) {
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+            PlaceSwitcherSheet(
+                places = places,
+                selectedPlaceId = currentObservationPlace.id,
+                onSelectPlace = { id ->
+                    mainViewModel.selectPlace(id)
+                    scope.launch { sheetState.hide() }.invokeOnCompletion {
+                        if (!sheetState.isVisible) isPlaceSwitcherVisible = false
+                    }
+                },
+                onDismissRequest = { isPlaceSwitcherVisible = false },
+                sheetState = sheetState
+            )
+        }
 
         ListDetailPaneScaffold(
             modifier = Modifier.padding(
@@ -208,7 +232,8 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     currentObservationPlace = currentObservationPlace,
                                     startDateTime = startDateTime,
                                     endDateTime = endDateTime,
-                                    currentObservationPlaceConfigurationState = currentObservationPlaceConfigurationState
+                                    currentObservationPlaceConfigurationState = currentObservationPlaceConfigurationState,
+                                    onClick = { isPlaceSwitcherVisible = true }
                                 )
                             }
 
@@ -250,6 +275,12 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                                 isFilterResultEmpty = missionFilter.isActive
                                                         && availableMissionTypes.isNotEmpty()
                                                         && scienceMissionList.isEmpty(),
+                                                isPlaceWithoutMissions = isPlaceWithoutMissions(
+                                                    missionFilter,
+                                                    availableMissionTypes,
+                                                    isLoadingMissions
+                                                ),
+                                                placeName = currentObservationPlace.name,
                                                 onClearFilters = {
                                                     mainViewModel.clearFilters()
                                                 },
@@ -323,18 +354,26 @@ fun ListPaneHeaderCard(
     startDateTime: String,
     endDateTime: String,
     modifier: Modifier = Modifier,
-    currentObservationPlaceConfigurationState: MainViewModel.ObservationPlaceConfigurationState = MainViewModel.ObservationPlaceConfigurationState.loading
+    currentObservationPlaceConfigurationState: MainViewModel.ObservationPlaceConfigurationState = MainViewModel.ObservationPlaceConfigurationState.loading,
+    onClick: () -> Unit = {}
 ) {
+    val isValid = currentObservationPlaceConfigurationState == MainViewModel.ObservationPlaceConfigurationState.valid
+
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
-//                                    .clickable {
-//                                        // show list of saved ObservationPlace or option to add one
-//                                    }
-//                                    .padding(8.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(
+                    enabled = isValid,
+                    onClickLabel = stringResource(Res.string.place_switcher_change),
+                    role = Role.Button,
+                    onClick = onClick
+                )
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
@@ -343,11 +382,30 @@ fun ListPaneHeaderCard(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            Text(
-                if (currentObservationPlaceConfigurationState == MainViewModel.ObservationPlaceConfigurationState.valid)
-                    currentObservationPlace.name
-                else stringResource(Res.string.main_unknown_place)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    if (isValid) currentObservationPlace.name
+                    else stringResource(Res.string.main_unknown_place),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (isValid) {
+                    Text(
+                        placeCoordinatesText(currentObservationPlace),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (isValid) {
+                // decorative: the row itself carries the click label
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = null
+                )
+            }
         }
 
 //        Row(

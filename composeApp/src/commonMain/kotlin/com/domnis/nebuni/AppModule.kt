@@ -21,11 +21,13 @@ package com.domnis.nebuni
 import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.database.getRoomDatabase
 import com.domnis.nebuni.network.ScienceAPI
+import com.domnis.nebuni.repository.ObservationPlaceRepository
 import com.domnis.nebuni.repository.ScienceMissionRepository
 import com.domnis.nebuni.ui.main.MainViewModel
 import com.domnis.nebuni.ui.missions.MissionViewModel
 import com.domnis.nebuni.ui.splash.SplashViewModel
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -42,8 +44,9 @@ val appModule = module {
             scienceAPI = get()
         )
     }
+    single { ObservationPlaceRepository(get<AppDatabase>().getObservationPlaceDao()) }
     viewModelOf(::SplashViewModel)
-    viewModelOf(::MainViewModel)
+    viewModel { MainViewModel(get(), get(), get()) }
     viewModelOf(::MissionViewModel)
 }
 

@@ -1,8 +1,10 @@
 package com.domnis.nebuni.repository
 
 import com.domnis.nebuni.data.EphemerisData
+import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.database.EphemerisDataDao
+import com.domnis.nebuni.database.ObservationPlaceDao
 import com.domnis.nebuni.database.ScienceMissionDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,5 +62,50 @@ class FakeEphemerisDataDao : EphemerisDataDao {
             it.missionKey == missionKey && it.observationPlaceID == observationPlaceID &&
                 it.timestamp >= timestamp && it.timestamp <= timestamp + 36_000_000
         }
+    }
+}
+
+/** In-memory [ObservationPlaceDao]; [operations] records the write calls in order. */
+class FakeObservationPlaceDao(initial: List<ObservationPlace> = emptyList()) : ObservationPlaceDao {
+    val places = MutableStateFlow(initial)
+    val operations = mutableListOf<String>()
+
+    override suspend fun insert(item: ObservationPlace) {
+        operations += "insert:${item.id}"
+        places.value = places.value + item
+    }
+
+    override suspend fun count(): Int = places.value.size
+
+    override fun getAllAsFlow(): Flow<List<ObservationPlace>> =
+        places.map { list -> list.sortedBy { it.name.lowercase() } }
+
+    // Stable sort keeps insertion order on ties, like the rowid tie-break of the real query.
+    override fun getSelectedAsFlow(): Flow<ObservationPlace?> =
+        places.map { list -> list.sortedByDescending { it.lastSelectedAt }.firstOrNull() }
+
+    override suspend fun getById(id: String): ObservationPlace? = places.value.firstOrNull { it.id == id }
+
+    override suspend fun markSelected(id: String, now: Long) {
+        operations += "markSelected:$id"
+        places.value = places.value.map { if (it.id == id) it.copy(lastSelectedAt = now) else it }
+    }
+
+    override suspend fun update(place: ObservationPlace) {
+        operations += "update:${place.id}"
+        places.value = places.value.map { if (it.id == place.id) place else it }
+    }
+
+    override suspend fun deleteMissionsOf(id: String) {
+        operations += "deleteMissionsOf:$id"
+    }
+
+    override suspend fun deleteEphemeridesOf(id: String) {
+        operations += "deleteEphemeridesOf:$id"
+    }
+
+    override suspend fun delete(id: String) {
+        operations += "delete:$id"
+        places.value = places.value.filterNot { it.id == id }
     }
 }

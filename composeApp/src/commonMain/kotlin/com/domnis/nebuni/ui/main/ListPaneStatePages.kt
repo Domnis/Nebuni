@@ -50,6 +50,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
@@ -58,6 +59,7 @@ import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.cd_info
 import nebuni.composeapp.generated.resources.filter_clear
 import nebuni.composeapp.generated.resources.filter_no_matching_mission
+import nebuni.composeapp.generated.resources.main_no_mission_for_place
 import nebuni.composeapp.generated.resources.onboarding_intro
 import nebuni.composeapp.generated.resources.onboarding_observation_place_info
 import nebuni.composeapp.generated.resources.onboarding_privacy
@@ -80,6 +82,16 @@ fun ListPaneLoadingPage() {
     }
 }
 
+/**
+ * True when the selected place has no cached mission at all and no filter hides any: the list then
+ * shows the "no mission for this place" message. Hidden while a refresh runs, as it may bring some.
+ */
+fun isPlaceWithoutMissions(
+    filter: MissionFilter,
+    availableTypes: List<MissionTypeCount>,
+    isLoadingMissions: Boolean
+): Boolean = !filter.isActive && availableTypes.isEmpty() && !isLoadingMissions
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ListPaneValidPage(
@@ -87,6 +99,8 @@ fun ListPaneValidPage(
     isLoadingMissions: Boolean,
     selectedMission: ScienceMission? = null,
     isFilterResultEmpty: Boolean = false,
+    isPlaceWithoutMissions: Boolean = false,
+    placeName: String = "",
     onClearFilters: () -> Unit = {},
     onRefresh: () -> Unit,
     onMissionSelected: (ScienceMission) -> Unit
@@ -126,6 +140,17 @@ fun ListPaneValidPage(
                             Text(stringResource(Res.string.filter_clear))
                         }
                     }
+                }
+            }
+
+            if (isPlaceWithoutMissions) {
+                // Kept inside the list so pull-to-refresh still works
+                item {
+                    Text(
+                        stringResource(Res.string.main_no_mission_for_place, placeName),
+                        modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
 

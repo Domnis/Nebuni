@@ -18,6 +18,7 @@
 
 package com.domnis.nebuni.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlin.uuid.ExperimentalUuidApi
@@ -32,5 +33,6 @@ data class ObservationPlace @OptIn(ExperimentalUuidApi::class) constructor(
     val altMin: Int = 0,
     val altMax: Int = 90,
     val azMin: Int = 0,
-    val azMax: Int = 360
+    val azMax: Int = 360,
+    @ColumnInfo(defaultValue = "0") val lastSelectedAt: Long = 0
 )

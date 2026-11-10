@@ -26,25 +26,29 @@ import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
-import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.getCurrentDate
 import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.getCurrentDateAndTimeWithOffset
+import com.domnis.nebuni.repository.ObservationPlaceRepository
 import com.domnis.nebuni.repository.ScienceMissionRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 class MainViewModel(
     var appState: AppState,
-    val database: AppDatabase,
-    private val scienceMissionRepository: ScienceMissionRepository
+    private val observationPlaceRepository: ObservationPlaceRepository,
+    private val scienceMissionRepository: ScienceMissionRepository,
+    private val refreshDispatcher: CoroutineDispatcher = Dispatchers.Default
 ): ViewModel() {
     enum class ObservationPlaceConfigurationState {
         loading,
@@ -57,6 +61,9 @@ class MainViewModel(
     var scienceMissionList = mutableStateOf<List<MissionSection>>(emptyList())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
 
+    /** Every saved place, sorted by name, for the place switcher. */
+    var places = mutableStateOf<List<ObservationPlace>>(emptyList())
+
     // In memory only: kept by the ViewModel across configuration changes, not persisted.
     var filter = mutableStateOf(MissionFilter())
     var availableTypes = mutableStateOf<List<MissionTypeCount>>(emptyList())
@@ -66,98 +73,114 @@ class MainViewModel(
     var endTime = mutableStateOf(getCurrentDateAndTimeWithOffset(12))
 
     private var missionJob: Job? = null
+    private var refreshJob: Job? = null
+
+    /** The values a mission refresh depends on: a change of any other field (the name) is ignored. */
+    private data class RefreshKey(
+        val id: String,
+        val latitude: Double,
+        val longitude: Double,
+        val altMin: Int,
+        val altMax: Int,
+        val azMin: Int,
+        val azMax: Int
+    )
+
+    private fun ObservationPlace.refreshKey() = RefreshKey(id, latitude, longitude, altMin, altMax, azMin, azMax)
 
     init {
         viewModelScope.launch {
-            snapshotFlow { appState.currentObservationPlace.value }
-                .onEach {
-                    missionJob?.cancel()
-
-                    missionJob = viewModelScope.launch {
-                        scienceMissionRepository
-                            .getScienceMissionFor(appState.currentObservationPlace.value)
-                            .combine(snapshotFlow { filter.value }) { missions, filter ->
-                                missions to filter
-                            }
-                            .combine(snapshotFlow { grouping.value }) { (missions, filter), grouping ->
-                                Triple(missions, filter, grouping)
-                            }
-                            .collect { (missions, filter, grouping) ->
-                                availableTypes.value = countMissionTypes(missions)
-                                val today = getCurrentDate(TimeZone.currentSystemDefault())
-                                val nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
-                                val filteredMissions = filterMissions(missions, filter, today, nowEpochMillis)
-                                scienceMissionList.value = when (grouping) {
-                                    Grouping.Date -> groupMissionsByDay(
-                                        filteredMissions,
-                                        today = today,
-                                        nowEpochMillis = nowEpochMillis
-                                    )
-                                    Grouping.Type -> groupMissionsByType(filteredMissions)
-                                }
-                            }
+            observationPlaceRepository.selectedPlace()
+                .onEach { place ->
+                    // AppState.currentObservationPlace is only written from the persisted selection
+                    if (place == null) {
+                        currentObservationPlaceConfigurationState.value = ObservationPlaceConfigurationState.invalid
+                    } else {
+                        appState.updateObservationPlace(place)
+                        currentObservationPlaceConfigurationState.value = ObservationPlaceConfigurationState.valid
                     }
                 }
-                .launchIn(viewModelScope)
+                .filterNotNull()
+                .distinctUntilChangedBy { it.refreshKey() }
+                .collect { place -> onPlaceChanged(place) }
         }
 
         viewModelScope.launch {
-            database.getObservationPlaceDao().getAllAsFlow().collect { places ->
-                if (places.isNotEmpty()) {
-                    if (currentObservationPlaceConfigurationState.value != ObservationPlaceConfigurationState.valid) {
-                        val selectedObservationPlace = places.first()
-                        appState.updateObservationPlace(selectedObservationPlace)
+            observationPlaceRepository.places().collect { places.value = it }
+        }
+    }
 
-                        currentObservationPlaceConfigurationState.value = ObservationPlaceConfigurationState.valid
-                    }
+    private fun onPlaceChanged(place: ObservationPlace) {
+        selectedMission.value = null
+        observeMissions(place)
+        refreshScienceMissions(place)
+    }
 
-                    refreshScienceMissions()
-                } else {
-                    currentObservationPlaceConfigurationState.value = ObservationPlaceConfigurationState.invalid
+    private fun observeMissions(place: ObservationPlace) {
+        missionJob?.cancel()
+
+        missionJob = viewModelScope.launch {
+            scienceMissionRepository
+                .getScienceMissionFor(place)
+                .combine(snapshotFlow { filter.value }) { missions, filter ->
+                    missions to filter
                 }
-            }
+                .combine(snapshotFlow { grouping.value }) { (missions, filter), grouping ->
+                    Triple(missions, filter, grouping)
+                }
+                .collect { (missions, filter, grouping) ->
+                    availableTypes.value = countMissionTypes(missions)
+                    val today = getCurrentDate(TimeZone.currentSystemDefault())
+                    val nowEpochMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                    val filteredMissions = filterMissions(missions, filter, today, nowEpochMillis)
+                    scienceMissionList.value = when (grouping) {
+                        Grouping.Date -> groupMissionsByDay(
+                            filteredMissions,
+                            today = today,
+                            nowEpochMillis = nowEpochMillis
+                        )
+                        Grouping.Type -> groupMissionsByType(filteredMissions)
+                    }
+                }
         }
     }
 
     fun refreshScienceMissions() {
+        refreshScienceMissions(appState.currentObservationPlace.value)
+    }
+
+    /** Refreshes the missions of [place]; any refresh still in flight is cancelled first. */
+    private fun refreshScienceMissions(place: ObservationPlace) {
+        refreshJob?.cancel()
         isLoadingMissions.value = true
 
-        viewModelScope.launch(Dispatchers.Default) {
+        refreshJob = viewModelScope.launch {
             // first call need to be sync to clean up database if needed
-            val newStartTime = getCurrentDateAndTimeWithOffset(0)
-            val newEndTime = getCurrentDateAndTimeWithOffset(2)
-
-            val isSucceed = scienceMissionRepository.refreshScienceMissions(
-                appState.currentObservationPlace.value,
-                newStartTime,
-                newEndTime,
-                true
-            )
-
-            //update UI to notify end of loading state
-            launch(Dispatchers.Main) {
-                isLoadingMissions.value = false
+            val isSucceed = withContext(refreshDispatcher) {
+                scienceMissionRepository.refreshScienceMissions(
+                    place,
+                    getCurrentDateAndTimeWithOffset(0),
+                    getCurrentDateAndTimeWithOffset(2),
+                    true
+                )
             }
 
+            //update UI to notify end of loading state
+            isLoadingMissions.value = false
+
             if (isSucceed) { // if first call is success, perform next calls
-                // get next chunk of data 3 days by 3 days
-                val maxIteration = 3
-                for (i in 1..maxIteration) {
-                    //2 because only 3 day of asteroids occultation data per request
-                    val dayOffset =
-                        i + 2 * i //2 because only 3 day of asteroids occultation data per request
-                    val newStartTime = getCurrentDateAndTimeWithOffset(dayOffset)
-                    val newEndTime = getCurrentDateAndTimeWithOffset(dayOffset + 2)
+                // get next chunks of data 3 days by 3 days, as children of this job so they are
+                // cancelled with it
+                withContext(refreshDispatcher) {
+                    val maxIteration = 3
+                    for (i in 1..maxIteration) {
+                        //2 because only 3 day of asteroids occultation data per request
+                        val dayOffset = i + 2 * i
+                        val newStartTime = getCurrentDateAndTimeWithOffset(dayOffset)
+                        val newEndTime = getCurrentDateAndTimeWithOffset(dayOffset + 2)
 
-                    viewModelScope.launch(Dispatchers.Default) {
-                        scienceMissionRepository.refreshScienceMissions(
-                            appState.currentObservationPlace.value,
-                            newStartTime,
-                            newEndTime
-                        )
-
-                        launch(Dispatchers.Main) {
-                            isLoadingMissions.value = false
+                        launch {
+                            scienceMissionRepository.refreshScienceMissions(place, newStartTime, newEndTime)
                         }
                     }
                 }
@@ -165,9 +188,17 @@ class MainViewModel(
         }
     }
 
+    /** Persists [newObservationPlace] as the selected place; the selection flow then switches to it. */
     fun addObservationPlace(newObservationPlace: ObservationPlace) {
-        viewModelScope.launch(Dispatchers.Default) {
-            database.getObservationPlaceDao().insert(newObservationPlace)
+        viewModelScope.launch {
+            observationPlaceRepository.add(newObservationPlace)
+        }
+    }
+
+    /** Makes the place [id] the selected one; the selection flow then switches to it. */
+    fun selectPlace(id: String) {
+        viewModelScope.launch {
+            observationPlaceRepository.select(id)
         }
     }
 

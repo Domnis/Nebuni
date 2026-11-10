@@ -22,23 +22,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.Screen
-import com.domnis.nebuni.database.AppDatabase
-import kotlinx.coroutines.Dispatchers
+import com.domnis.nebuni.repository.ObservationPlaceRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class SplashViewModel(val appState: AppState, val database: AppDatabase): ViewModel() {
+class SplashViewModel(
+    val appState: AppState,
+    private val observationPlaceRepository: ObservationPlaceRepository
+): ViewModel() {
     init {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch {
             delay(1000)
 
-            database.getObservationPlaceDao().getAllAsFlow().collect { places ->
-                if (places.isNotEmpty()) {
-                    appState.updateObservationPlace(places.first())
-                }
-
-                appState.navigateTo(Screen.Main)
+            // the most recently selected place, so a restart shows the last place the user picked
+            observationPlaceRepository.selectedPlace().first()?.let { place ->
+                appState.updateObservationPlace(place)
             }
+
+            appState.navigateTo(Screen.Main)
         }
     }
 }
