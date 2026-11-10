@@ -21,6 +21,7 @@ package com.domnis.nebuni
 import com.domnis.nebuni.database.AppDatabase
 import com.domnis.nebuni.database.getRoomDatabase
 import com.domnis.nebuni.network.ScienceAPI
+import com.domnis.nebuni.repository.ObservationPlaceRepository
 import com.domnis.nebuni.repository.ScienceMissionRepository
 import com.domnis.nebuni.ui.main.MainViewModel
 import com.domnis.nebuni.ui.missions.MissionViewModel
@@ -42,6 +43,7 @@ val appModule = module {
             scienceAPI = get()
         )
     }
+    single { ObservationPlaceRepository(get<AppDatabase>().getObservationPlaceDao()) }
     viewModelOf(::SplashViewModel)
     viewModelOf(::MainViewModel)
     viewModelOf(::MissionViewModel)
