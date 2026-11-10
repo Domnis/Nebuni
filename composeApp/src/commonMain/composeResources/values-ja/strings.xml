@@ -80,6 +80,7 @@
     <string name="main_mission_start">開始：%1$s</string>
     <string name="place_switcher_title">観測地</string>
     <string name="place_switcher_change">観測地を変更</string>
+    <string name="place_switcher_add">観測地を追加</string>
     <string name="place_coordinates">%1$s、%2$s</string>
     <string name="place_lat_north">北緯 %1$s°</string>
     <string name="place_lat_south">南緯 %1$s°</string>

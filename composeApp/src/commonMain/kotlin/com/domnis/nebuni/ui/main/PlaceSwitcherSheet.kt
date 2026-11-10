@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
@@ -48,6 +49,7 @@ import nebuni.composeapp.generated.resources.place_lat_north
 import nebuni.composeapp.generated.resources.place_lat_south
 import nebuni.composeapp.generated.resources.place_lon_east
 import nebuni.composeapp.generated.resources.place_lon_west
+import nebuni.composeapp.generated.resources.place_switcher_add
 import nebuni.composeapp.generated.resources.place_switcher_title
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
@@ -73,13 +75,14 @@ fun placeCoordinatesText(place: ObservationPlace): String {
     )
 }
 
-/** Lists the saved [places]; tapping one calls [onSelectPlace] with its id. */
+/** Lists the saved [places]; tapping one calls [onSelectPlace] with its id, the button calls [onAddPlace]. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaceSwitcherSheet(
     places: List<ObservationPlace>,
     selectedPlaceId: String,
     onSelectPlace: (String) -> Unit,
+    onAddPlace: () -> Unit,
     onDismissRequest: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
@@ -94,7 +97,7 @@ fun PlaceSwitcherSheet(
                 style = fontStyle_header
             )
 
-            LazyColumn(modifier = Modifier.fillMaxWidth().selectableGroup()) {
+            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f, fill = false).selectableGroup()) {
                 items(places, key = { it.id }) { place ->
                     val isSelected = place.id == selectedPlaceId
                     Row(
@@ -122,6 +125,13 @@ fun PlaceSwitcherSheet(
                         }
                     }
                 }
+            }
+
+            FilledTonalButton(
+                onClick = onAddPlace,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)
+            ) {
+                Text(stringResource(Res.string.place_switcher_add))
             }
         }
     }

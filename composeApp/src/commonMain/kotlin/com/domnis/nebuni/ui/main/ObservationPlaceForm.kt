@@ -85,6 +85,9 @@ import org.jetbrains.compose.resources.stringResource
 /** Whether the form creates a new place or edits an existing one (the id is then preserved). */
 enum class ObservationPlaceFormMode { Create, Edit }
 
+/** [this] as the starting values of a new place: same location and sky area, blank name so the form proposes its default. */
+fun ObservationPlace.asNewPlaceTemplate(): ObservationPlace = copy(name = "")
+
 /** Width of the dialog on non-compact windows. */
 internal val ObservationPlaceFormDialogWidth = 560.dp
 

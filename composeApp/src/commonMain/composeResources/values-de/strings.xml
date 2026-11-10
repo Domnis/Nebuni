@@ -80,6 +80,7 @@
     <string name="main_mission_start">Beginn: %1$s</string>
     <string name="place_switcher_title">Beobachtungsorte</string>
     <string name="place_switcher_change">Beobachtungsort wechseln</string>
+    <string name="place_switcher_add">Beobachtungsort hinzufügen</string>
     <string name="place_coordinates">%1$s, %2$s</string>
     <string name="place_lat_north">%1$s° N</string>
     <string name="place_lat_south">%1$s° S</string>
