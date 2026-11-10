@@ -78,6 +78,14 @@
     <string name="main_title">Nebuni</string>
     <string name="main_unknown_place">???</string>
     <string name="main_mission_start">Beginn: %1$s</string>
+    <string name="place_switcher_title">Beobachtungsorte</string>
+    <string name="place_switcher_change">Beobachtungsort wechseln</string>
+    <string name="place_coordinates">%1$s, %2$s</string>
+    <string name="place_lat_north">%1$s° N</string>
+    <string name="place_lat_south">%1$s° S</string>
+    <string name="place_lon_east">%1$s° O</string>
+    <string name="place_lon_west">%1$s° W</string>
+    <string name="main_no_mission_for_place">Keine Mission für %1$s in den nächsten Tagen. Zum Aktualisieren nach unten ziehen.</string>
     <string name="cd_back">Ein Zurück-Pfeil-Symbol</string>
     <string name="cd_refresh">Ein Aktualisieren-Symbol</string>
     <string name="cd_location">Ein Standort-Symbol</string>
