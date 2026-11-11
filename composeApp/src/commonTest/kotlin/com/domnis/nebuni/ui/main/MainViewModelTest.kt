@@ -18,9 +18,11 @@ import io.ktor.client.request.HttpResponseData
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -125,6 +127,65 @@ class MainViewModelTest {
         assertEquals("c", appState.currentObservationPlace.value.id)
         viewModel.isLoadingMissionsSettled()
         assertEquals(listOf("1.0", "3.0"), requests.value)
+    }
+
+    @Test
+    fun deletingTheSelectedPlaceSelectsTheMostRecentlyUsedRemainingOne() = runTest {
+        val placeC = ObservationPlace(id = "c", name = "C", latitude = 3.0, lastSelectedAt = 1)
+        val dao = FakeObservationPlaceDao(listOf(placeA, placeB, placeC))
+        val viewModel = viewModel(placeRepository(dao))
+        requests.first { it.isNotEmpty() }
+
+        viewModel.deletePlace("a")
+        advanceUntilIdle()
+
+        assertEquals(listOf("delete:a"), dao.operations.filter { it.startsWith("delete:") })
+        assertEquals("b", appState.currentObservationPlace.value.id)
+        assertEquals(listOf("b", "c"), viewModel.places.value.map { it.id })
+    }
+
+    @Test
+    fun deletingAnotherPlaceLeavesTheSelectedRefreshUntouched() = runTest {
+        val dao = FakeObservationPlaceDao(listOf(placeA, placeB))
+        val viewModel = viewModel(placeRepository(dao)) { latitude, index ->
+            if (latitude == "1.0" && index > 0) {
+                // the next chunks of place A stay in flight until cancelled
+                try {
+                    awaitCancellation()
+                } finally {
+                    cancelled.update { it + latitude }
+                }
+            }
+            respond(oneMissionJson, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        // first call of place A, then its 3 chunks (in flight)
+        requests.first { it.size == 4 }
+        viewModel.isLoadingMissionsSettled()
+
+        viewModel.deletePlace("b")
+        advanceUntilIdle()
+
+        assertEquals(listOf("delete:b"), dao.operations.filter { it.startsWith("delete:") })
+        assertEquals(emptyList(), cancelled.value)
+        assertFalse(viewModel.isLoadingMissions.value)
+        assertEquals("a", appState.currentObservationPlace.value.id)
+        assertEquals(listOf("a"), viewModel.places.value.map { it.id })
+        // the chunks are still in flight: stop them so the test can complete
+        viewModel.viewModelScope.cancel()
+        cancelled.first { it.size == 3 }
+    }
+
+    @Test
+    fun theLastPlaceIsNotDeleted() = runTest {
+        val dao = FakeObservationPlaceDao(listOf(placeA))
+        val viewModel = viewModel(placeRepository(dao))
+        advanceUntilIdle()
+
+        viewModel.deletePlace("a")
+        advanceUntilIdle()
+
+        assertEquals(listOf(placeA), dao.places.value)
+        assertEquals("a", appState.currentObservationPlace.value.id)
     }
 
     @Test

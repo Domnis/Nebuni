@@ -123,4 +123,10 @@
     <string name="place_form_azimuth_max">Azimut max.</string>
     <string name="place_form_azimuth_max_hint">Zwischen 0° und 360°, größer als Azimut min.</string>
     <string name="place_form_submit">Beobachtungsort anlegen</string>
+    <string name="place_delete_button">Diesen Ort löschen</string>
+    <string name="place_delete_last">Dein einziger Beobachtungsort kann nicht gelöscht werden.</string>
+    <string name="place_delete_confirm_title">Diesen Ort löschen?</string>
+    <string name="place_delete_confirm_text">Dieser Ort sowie seine zwischengespeicherten Missionen und Ephemeriden werden von diesem Gerät entfernt. Das kann nicht rückgängig gemacht werden.</string>
+    <string name="place_delete_confirm">Löschen</string>
+    <string name="place_delete_cancel">Abbrechen</string>
 </resources>

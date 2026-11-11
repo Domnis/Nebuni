@@ -37,6 +37,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -44,6 +45,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,6 +63,12 @@ import androidx.window.core.layout.WindowSizeClass
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import nebuni.composeapp.generated.resources.Res
+import nebuni.composeapp.generated.resources.place_delete_button
+import nebuni.composeapp.generated.resources.place_delete_cancel
+import nebuni.composeapp.generated.resources.place_delete_confirm
+import nebuni.composeapp.generated.resources.place_delete_confirm_text
+import nebuni.composeapp.generated.resources.place_delete_confirm_title
+import nebuni.composeapp.generated.resources.place_delete_last
 import nebuni.composeapp.generated.resources.place_form_altitude_max
 import nebuni.composeapp.generated.resources.place_form_altitude_max_hint
 import nebuni.composeapp.generated.resources.place_form_altitude_min
@@ -97,6 +105,8 @@ fun ObservationPlaceFormDialog(
     mode: ObservationPlaceFormMode,
     onDismissRequest: () -> Unit,
     onSubmit: (ObservationPlace) -> Unit,
+    canDelete: Boolean = false,
+    onDelete: (() -> Unit)? = null,
 ) {
     val isCompact = !currentWindowAdaptiveInfo().windowSizeClass
         .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
@@ -110,7 +120,7 @@ fun ObservationPlaceFormDialog(
                 Column(
                     modifier = Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
                 ) {
-                    ObservationPlaceForm(initial, mode, onSubmit)
+                    ObservationPlaceForm(initial, mode, onSubmit, canDelete, onDelete)
                 }
             }
         } else {
@@ -120,7 +130,7 @@ fun ObservationPlaceFormDialog(
                 color = MaterialTheme.colorScheme.surfaceContainer
             ) {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    ObservationPlaceForm(initial, mode, onSubmit)
+                    ObservationPlaceForm(initial, mode, onSubmit, canDelete, onDelete)
                 }
             }
         }
@@ -133,7 +143,10 @@ fun ObservationPlaceForm(
     initial: ObservationPlace,
     mode: ObservationPlaceFormMode,
     onSubmit: (ObservationPlace) -> Unit,
+    canDelete: Boolean = false,
+    onDelete: (() -> Unit)? = null,
 ) {
+    var isDeleteConfirmVisible by remember { mutableStateOf(false) }
     val nameState = rememberTextFieldState(
         initialText = initial.name.ifBlank { stringResource(Res.string.place_form_default_name) },
     )
@@ -334,6 +347,53 @@ fun ObservationPlaceForm(
             ) {
                 Text(stringResource(Res.string.place_form_submit), style = ButtonDefaults.textStyleFor(size))
             }
+
+            if (mode == ObservationPlaceFormMode.Edit && onDelete != null) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Button(
+                        onClick = { isDeleteConfirmVisible = true },
+                        enabled = canDelete,
+                        modifier = Modifier.fillMaxWidth().heightIn(size),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        ),
+                        contentPadding = ButtonDefaults.contentPaddingFor(size)
+                    ) {
+                        Text(stringResource(Res.string.place_delete_button), style = ButtonDefaults.textStyleFor(size))
+                    }
+                    if (!canDelete) {
+                        Text(
+                            stringResource(Res.string.place_delete_last),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
+    }
+
+    if (isDeleteConfirmVisible && onDelete != null) {
+        AlertDialog(
+            onDismissRequest = { isDeleteConfirmVisible = false },
+            title = { Text(stringResource(Res.string.place_delete_confirm_title)) },
+            text = { Text(stringResource(Res.string.place_delete_confirm_text)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isDeleteConfirmVisible = false
+                        onDelete()
+                    }
+                ) {
+                    Text(stringResource(Res.string.place_delete_confirm), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { isDeleteConfirmVisible = false }) {
+                    Text(stringResource(Res.string.place_delete_cancel))
+                }
+            }
+        )
     }
 }
