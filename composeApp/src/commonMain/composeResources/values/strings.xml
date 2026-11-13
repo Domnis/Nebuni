@@ -108,4 +108,10 @@
     <string name="place_form_azimuth_max">Azimuth Max</string>
     <string name="place_form_azimuth_max_hint">Should be between 0° and 360° and bigger than Azimuth Min</string>
     <string name="place_form_submit">Create Observation Place</string>
+    <string name="place_delete_button">Delete this place</string>
+    <string name="place_delete_last">You can’t delete your only observation place.</string>
+    <string name="place_delete_confirm_title">Delete this place?</string>
+    <string name="place_delete_confirm_text">This place and its cached missions and ephemerides will be removed from this device. This can’t be undone.</string>
+    <string name="place_delete_confirm">Delete</string>
+    <string name="place_delete_cancel">Cancel</string>
 </resources>

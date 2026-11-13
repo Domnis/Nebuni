@@ -123,4 +123,10 @@
     <string name="place_form_azimuth_max">最大方位角</string>
     <string name="place_form_azimuth_max_hint">0°から360°の間で、最小方位角より大きい値を指定してください</string>
     <string name="place_form_submit">観測地を作成</string>
+    <string name="place_delete_button">この観測地を削除</string>
+    <string name="place_delete_last">唯一の観測地は削除できません。</string>
+    <string name="place_delete_confirm_title">この観測地を削除しますか？</string>
+    <string name="place_delete_confirm_text">この観測地と、キャッシュされたミッションおよび天体暦がこのデバイスから削除されます。この操作は元に戻せません。</string>
+    <string name="place_delete_confirm">削除</string>
+    <string name="place_delete_cancel">キャンセル</string>
 </resources>

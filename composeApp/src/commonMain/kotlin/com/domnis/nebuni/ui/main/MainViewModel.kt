@@ -34,6 +34,7 @@ import com.domnis.nebuni.repository.ScienceMissionRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
@@ -199,6 +200,24 @@ class MainViewModel(
     fun selectPlace(id: String) {
         viewModelScope.launch {
             observationPlaceRepository.select(id)
+        }
+    }
+
+    /**
+     * Deletes the place [id] with its cached data. When it is the selected place, the refresh in
+     * flight is cancelled and awaited first so it cannot write rows back for the deleted place; the
+     * selection flow then falls back to the most recently selected remaining place. The refresh of
+     * another place is left untouched. The last place is never deleted.
+     */
+    fun deletePlace(id: String) {
+        if (places.value.size <= 1) return
+        val isSelected = id == appState.currentObservationPlace.value.id
+        viewModelScope.launch {
+            if (isSelected) {
+                refreshJob?.cancelAndJoin()
+                isLoadingMissions.value = false
+            }
+            observationPlaceRepository.delete(id)
         }
     }
 

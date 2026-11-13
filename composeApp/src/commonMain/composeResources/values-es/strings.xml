@@ -121,4 +121,10 @@
     <string name="place_form_azimuth_max">Acimut máx.</string>
     <string name="place_form_azimuth_max_hint">Debe estar entre 0° y 360° y ser mayor que el acimut mín.</string>
     <string name="place_form_submit">Crear el Lugar de observación</string>
+    <string name="place_delete_button">Eliminar este lugar</string>
+    <string name="place_delete_last">No puedes eliminar tu único lugar de observación.</string>
+    <string name="place_delete_confirm_title">¿Eliminar este lugar?</string>
+    <string name="place_delete_confirm_text">Este lugar y sus misiones y efemérides en caché se eliminarán de este dispositivo. Esta acción no se puede deshacer.</string>
+    <string name="place_delete_confirm">Eliminar</string>
+    <string name="place_delete_cancel">Cancelar</string>
 </resources>
