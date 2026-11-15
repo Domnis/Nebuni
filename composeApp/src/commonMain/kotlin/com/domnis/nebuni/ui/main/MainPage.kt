@@ -61,6 +61,7 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -113,6 +114,8 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
     var isListAndDetailVisible by remember { mutableStateOf(false) }
     var isPlaceSwitcherVisible by remember { mutableStateOf(false) }
     var isAddPlaceFormVisible by remember { mutableStateOf(false) }
+    // id of the place whose form is open in Edit mode, null when it is closed
+    var editedPlaceId by remember { mutableStateOf<String?>(null) }
 
     var scienceMissionList by mainViewModel.scienceMissionList
     var selectedMission by mainViewModel.selectedMission
@@ -199,6 +202,10 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                         if (!sheetState.isVisible) isPlaceSwitcherVisible = false
                     }
                 },
+                onEditPlace = { id ->
+                    isPlaceSwitcherVisible = false
+                    editedPlaceId = id
+                },
                 onAddPlace = {
                     isPlaceSwitcherVisible = false
                     isAddPlaceFormVisible = true
@@ -219,6 +226,28 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                     isAddPlaceFormVisible = false
                 }
             )
+        }
+
+        // the form closes by itself if the edited place disappears
+        places.firstOrNull { it.id == editedPlaceId }?.let { editedPlace ->
+            // one form state per place, so its fields never show another place's values
+            key(editedPlace.id) {
+                ObservationPlaceFormDialog(
+                    initial = editedPlace,
+                    mode = ObservationPlaceFormMode.Edit,
+                    onDismissRequest = { editedPlaceId = null },
+                    onSubmit = { place ->
+                        mainViewModel.updatePlace(place)
+                        editedPlaceId = null
+                    },
+                    canDelete = mainViewModel.canDeletePlace(),
+                    onDelete = {
+                        // the form has already hidden its confirmation dialog; closing the form ends both
+                        mainViewModel.deletePlace(editedPlace.id)
+                        editedPlaceId = null
+                    }
+                )
+            }
         }
 
         ListDetailPaneScaffold(

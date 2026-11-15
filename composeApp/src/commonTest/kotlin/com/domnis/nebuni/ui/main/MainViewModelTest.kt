@@ -40,6 +40,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
@@ -185,6 +186,35 @@ class MainViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf(placeA), dao.places.value)
+        assertEquals("a", appState.currentObservationPlace.value.id)
+    }
+
+    @Test
+    fun aPlaceCanBeDeletedOnlyWhenAnotherOneRemains() = runTest {
+        val dao = FakeObservationPlaceDao(listOf(placeA, placeB))
+        val viewModel = viewModel(placeRepository(dao))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.canDeletePlace())
+
+        viewModel.deletePlace("b")
+        advanceUntilIdle()
+
+        assertFalse(viewModel.canDeletePlace())
+    }
+
+    @Test
+    fun updatingAPlaceFromTheEditFormPersistsItAndKeepsItsSelectionDate() = runTest {
+        val dao = FakeObservationPlaceDao(listOf(placeA, placeB))
+        val viewModel = viewModel(placeRepository(dao))
+        advanceUntilIdle()
+
+        // the form gives back the edited values with the place id but no selection date
+        viewModel.updatePlace(ObservationPlace(id = "b", name = "Renamed B", latitude = 2.0))
+        advanceUntilIdle()
+
+        assertEquals(listOf("update:b"), dao.operations.filter { it.startsWith("update:") })
+        assertEquals(placeB.copy(name = "Renamed B"), viewModel.places.value.first { it.id == "b" })
         assertEquals("a", appState.currentObservationPlace.value.id)
     }
 
