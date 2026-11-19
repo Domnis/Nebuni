@@ -3,6 +3,7 @@ package com.domnis.nebuni.ui.main
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.network.ScienceAPI
 import com.domnis.nebuni.repository.FakeEphemerisDataDao
 import com.domnis.nebuni.repository.FakeObservationPlaceDao
@@ -40,6 +41,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
@@ -268,8 +270,48 @@ class MainViewModelTest {
         viewModel.awaitMissionKeys(listOf("mB"))
         assertEquals(placeB.id, appState.currentObservationPlace.value.id)
         viewModel.isLoadingMissionsSettled()
-        // the failed refresh keeps the cache
+        // the failed refresh keeps the cache and is reported
         assertEquals(listOf("mB"), viewModel.missionKeys())
+        assertTrue(viewModel.lastRefreshFailed.value)
+        assertTrue(isShowingSavedMissionsAfterFailure(viewModel.lastRefreshFailed.value, viewModel.availableTypes.value))
+    }
+
+    @Test
+    fun anAnsweredRefreshIsNotReportedAsFailed() = runTest {
+        val viewModel = viewModel(placeRepository(FakeObservationPlaceDao(listOf(placeA)))) { _, _ ->
+            respond(oneMissionJson, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        requests.first { it.isNotEmpty() }
+        viewModel.isLoadingMissionsSettled()
+
+        assertFalse(viewModel.lastRefreshFailed.value)
+        viewModel.viewModelScope.cancel()
+    }
+
+    @Test
+    fun aNewRefreshClearsTheFailedState() = runTest {
+        var online = false
+        val viewModel = viewModel(placeRepository(FakeObservationPlaceDao(listOf(placeA)))) { _, _ ->
+            if (online) respond("{}", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            else respond("", HttpStatusCode.ServiceUnavailable)
+        }
+        requests.first { it.isNotEmpty() }
+        viewModel.isLoadingMissionsSettled()
+        assertTrue(viewModel.lastRefreshFailed.value)
+
+        online = true
+        viewModel.refreshScienceMissions()
+        viewModel.isLoadingMissionsSettled()
+
+        assertFalse(viewModel.lastRefreshFailed.value)
+    }
+
+    @Test
+    fun theSavedMissionsHintNeedsAFailureAndCachedMissions() {
+        val types = listOf(MissionTypeCount(ScienceMissionType.AsteroidOccultation, 1))
+        assertTrue(isShowingSavedMissionsAfterFailure(lastRefreshFailed = true, availableTypes = types))
+        assertFalse(isShowingSavedMissionsAfterFailure(lastRefreshFailed = true, availableTypes = emptyList()))
+        assertFalse(isShowingSavedMissionsAfterFailure(lastRefreshFailed = false, availableTypes = types))
     }
 
     private fun MainViewModel.missionKeys() = scienceMissionList.value.flatMap { it.missions }.map { it.missionKey }

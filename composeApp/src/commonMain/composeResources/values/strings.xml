@@ -72,6 +72,7 @@
     <string name="place_lon_east">%1$s° E</string>
     <string name="place_lon_west">%1$s° W</string>
     <string name="main_no_mission_for_place">No mission for %1$s in the coming days. Pull down to refresh.</string>
+    <string name="main_refresh_failed_showing_saved">Couldn't refresh missions. Showing saved missions.</string>
     <string name="cd_back">A back arrow icon</string>
     <string name="cd_refresh">A refresh icon</string>
     <string name="cd_location">A location icon</string>

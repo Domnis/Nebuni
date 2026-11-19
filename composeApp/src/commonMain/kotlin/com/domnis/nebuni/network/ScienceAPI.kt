@@ -43,7 +43,7 @@ class ScienceAPI(
         observationPlace: ObservationPlace,
         startDateTime: String,
         endDateTime: String
-    ): List<ScienceMission> {
+    ): ScienceMissionsResult {
         val body = postForm {
             append("action", "get-science-events")
             append("date", startDateTime) // start date?
@@ -53,15 +53,15 @@ class ScienceAPI(
             append("tend", endDateTime) // end date for fetch?
             append("alt", "${observationPlace.altMin},${observationPlace.altMax}") // Full Alt possibles
             append("az", "${observationPlace.azMin},${observationPlace.azMax}") // Full Az possibles
-        } ?: return emptyList()
+        } ?: return ScienceMissionsResult.Failure(ScienceApiFailure.Network)
 
         return try {
-            SimpleScienceMissionJsonParser().parseJson(body, observationPlace.id)
+            ScienceMissionsResult.Success(SimpleScienceMissionJsonParser().parseJson(body, observationPlace.id))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             e.printStackTrace()
-            emptyList()
+            ScienceMissionsResult.Failure(ScienceApiFailure.MalformedResponse)
         }
     }
 
