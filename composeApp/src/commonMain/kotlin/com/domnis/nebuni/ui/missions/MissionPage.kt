@@ -60,7 +60,6 @@ import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.data.EphemerisData
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.data.ScienceMissionType
-import com.domnis.nebuni.ui.main.labelResource
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import kotlinx.coroutines.DelicateCoroutinesApi
 import nebuni.composeapp.generated.resources.Res
@@ -199,7 +198,7 @@ fun DataMissionPage(
 
         item {
             Column {
-                Text(stringResource(Res.string.mission_type_label, stringResource(mission.getMissionType().labelResource())))
+                Text(stringResource(Res.string.mission_type_label, stringResource(mission.getMissionType().label)))
                 Text(stringResource(Res.string.mission_target, mission.target_name))
             }
 

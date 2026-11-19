@@ -3,6 +3,7 @@ package com.domnis.nebuni.network
 import com.domnis.nebuni.data.EphemerisArgs
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.data.ScienceMissionType
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
@@ -73,6 +74,47 @@ class ScienceAPITest {
         assertTrue(result.all { it.observationPlaceID == "place-1" })
         assertEquals(45, result[0].alt)
         assertTrue(sentBody.contains("action=get-science-events"))
+        assertTrue(sentBody.contains("pipeline=o%2Ce%2Cc%2Cp"))
+    }
+
+    @Test
+    fun listScienceMissions_parsesPlanetaryDefenseMissionWithEphemerisArgs() = runTest {
+        val body = """
+            {
+              "pd1": {"pipeline_type": "p", "target_name": "Apophis", "ephemeris_args": {
+                "name": "99942 Apophis", "loc": "43.28,5.37", "tstart": "2029-04-13T00:00:00Z",
+                "auto_step": "true", "duration": "90.0", "gain": "25.0", "exp_time": "400.0",
+                "is_comet": "false"}}
+            }
+        """.trimIndent()
+
+        val result = api(json(body)).listScienceMissions(place, "a", "b")
+
+        val parsed = result.single()
+        assertEquals(ScienceMissionType.PlanetaryDefense, parsed.getMissionType())
+        assertEquals(
+            EphemerisArgs(
+                name = "99942 Apophis",
+                loc = "43.28,5.37",
+                tstart = "2029-04-13T00:00:00Z",
+                auto_step = "true",
+                duration = "90.0",
+                gain = "25.0",
+                exp_time = "400.0",
+                is_comet = "false"
+            ),
+            parsed.ephemeris_args
+        )
+    }
+
+    @Test
+    fun getWebsiteEventLink_planetaryDefensePointsToSanitizedDefenseName() {
+        val pd = mission.copy(
+            pipeline_type = "p",
+            ephemeris_args = mission.ephemeris_args!!.copy(name = "99942 Apophis/B")
+        )
+
+        assertEquals("https://science.unistellar.com/events/defenses/99942ApophisB", pd.getWebsiteEventLink())
     }
 
     @Test

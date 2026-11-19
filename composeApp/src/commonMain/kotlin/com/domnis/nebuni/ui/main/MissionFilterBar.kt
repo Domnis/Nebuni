@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.data.ScienceMissionType
+import com.domnis.nebuni.ui.missions.label
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.e911_emergency
 import nebuni.composeapp.generated.resources.filter_chip_label
@@ -43,12 +44,6 @@ import nebuni.composeapp.generated.resources.filter_date_today
 import nebuni.composeapp.generated.resources.filter_priority
 import nebuni.composeapp.generated.resources.grouping_date
 import nebuni.composeapp.generated.resources.grouping_type
-import nebuni.composeapp.generated.resources.mission_type_asteroid_occultation
-import nebuni.composeapp.generated.resources.mission_type_cometary_activity
-import nebuni.composeapp.generated.resources.mission_type_exoplanet_transit
-import nebuni.composeapp.generated.resources.mission_type_planetary_defense
-import nebuni.composeapp.generated.resources.mission_type_satellite
-import nebuni.composeapp.generated.resources.mission_type_unknown
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -104,7 +99,7 @@ fun MissionFilterBar(
                     Text(
                         stringResource(
                             Res.string.filter_chip_label,
-                            stringResource(typeCount.type.labelResource()),
+                            stringResource(typeCount.type.label),
                             typeCount.count
                         )
                     )
@@ -135,13 +130,4 @@ fun DateRange.labelResource(): StringResource = when (this) {
 fun Grouping.labelResource(): StringResource = when (this) {
     Grouping.Date -> Res.string.grouping_date
     Grouping.Type -> Res.string.grouping_type
-}
-
-fun ScienceMissionType.labelResource(): StringResource = when (this) {
-    ScienceMissionType.AsteroidOccultation -> Res.string.mission_type_asteroid_occultation
-    ScienceMissionType.CometaryActivity -> Res.string.mission_type_cometary_activity
-    ScienceMissionType.ExoplanetTransit -> Res.string.mission_type_exoplanet_transit
-    ScienceMissionType.PlanetaryDefense -> Res.string.mission_type_planetary_defense
-    ScienceMissionType.Satellite -> Res.string.mission_type_satellite
-    ScienceMissionType.Unknown -> Res.string.mission_type_unknown
 }
