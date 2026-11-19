@@ -112,10 +112,10 @@ Here are some elements to be added inside the app to have a good experience with
 - [x] Save GPS coordinates for next app use
 - [x] Save API result locally for offline use
 - [x] Support "Cometary Activity" missions
-- [ ] Support "Planetary Defense" missions
-- [ ] Add option to create new Observation Place
-- [ ] Add option to update and delete Observation Place
-- [ ] Add option to filter and group missions (by type, start date,...)
+- [x] Support "Planetary Defense" missions
+- [x] Add option to create new Observation Place
+- [x] Add option to update and delete Observation Place
+- [x] Add option to filter and group missions (by type, start date,...)
 
 <a id="-how-to-support"></a>
 # ❤️ How to support?
