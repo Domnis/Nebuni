@@ -39,6 +39,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -89,6 +90,7 @@ import nebuni.composeapp.generated.resources.cd_back
 import nebuni.composeapp.generated.resources.cd_location
 import nebuni.composeapp.generated.resources.e911_emergency
 import nebuni.composeapp.generated.resources.main_mission_start
+import nebuni.composeapp.generated.resources.main_refresh_failed_showing_saved
 import nebuni.composeapp.generated.resources.main_title
 import nebuni.composeapp.generated.resources.main_unknown_place
 import nebuni.composeapp.generated.resources.mission_priority_icon_description
@@ -111,6 +113,7 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
     val navigator = rememberListDetailPaneScaffoldNavigator<Nothing>()
 
     var isLoadingMissions by mainViewModel.isLoadingMissions
+    val lastRefreshFailed by mainViewModel.lastRefreshFailed
     var isListAndDetailVisible by remember { mutableStateOf(false) }
     var isPlaceSwitcherVisible by remember { mutableStateOf(false) }
     var isAddPlaceFormVisible by remember { mutableStateOf(false) }
@@ -268,6 +271,10 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     startDateTime = startDateTime,
                                     endDateTime = endDateTime,
                                     currentObservationPlaceConfigurationState = currentObservationPlaceConfigurationState,
+                                    isShowingSavedMissionsAfterFailure = isShowingSavedMissionsAfterFailure(
+                                        lastRefreshFailed,
+                                        availableMissionTypes
+                                    ),
                                     onClick = { isPlaceSwitcherVisible = true }
                                 )
                             }
@@ -390,6 +397,7 @@ fun ListPaneHeaderCard(
     endDateTime: String,
     modifier: Modifier = Modifier,
     currentObservationPlaceConfigurationState: MainViewModel.ObservationPlaceConfigurationState = MainViewModel.ObservationPlaceConfigurationState.loading,
+    isShowingSavedMissionsAfterFailure: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     val isValid = currentObservationPlaceConfigurationState == MainViewModel.ObservationPlaceConfigurationState.valid
@@ -461,6 +469,28 @@ fun ListPaneHeaderCard(
 //                )
 //            )
 //        }
+
+        if (isValid && isShowingSavedMissionsAfterFailure) {
+            // non-blocking hint: the cached missions stay usable below
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    stringResource(Res.string.main_refresh_failed_showing_saved),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         HorizontalDivider()
     }

@@ -88,6 +88,7 @@
     <string name="place_lon_east">%1$s° O</string>
     <string name="place_lon_west">%1$s° W</string>
     <string name="main_no_mission_for_place">Keine Mission für %1$s in den nächsten Tagen. Zum Aktualisieren nach unten ziehen.</string>
+    <string name="main_refresh_failed_showing_saved">Missionen konnten nicht aktualisiert werden. Gespeicherte Missionen werden angezeigt.</string>
     <string name="cd_back">Ein Zurück-Pfeil-Symbol</string>
     <string name="cd_refresh">Ein Aktualisieren-Symbol</string>
     <string name="cd_location">Ein Standort-Symbol</string>

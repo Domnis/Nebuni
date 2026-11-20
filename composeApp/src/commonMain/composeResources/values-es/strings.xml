@@ -86,6 +86,7 @@
     <string name="place_lon_east">%1$s° E</string>
     <string name="place_lon_west">%1$s° O</string>
     <string name="main_no_mission_for_place">No hay misiones para %1$s en los próximos días. Desliza hacia abajo para actualizar.</string>
+    <string name="main_refresh_failed_showing_saved">No se pudieron actualizar las misiones. Se muestran las misiones guardadas.</string>
     <string name="cd_back">Un icono de flecha atrás</string>
     <string name="cd_refresh">Un icono de actualizar</string>
     <string name="cd_location">Un icono de ubicación</string>
