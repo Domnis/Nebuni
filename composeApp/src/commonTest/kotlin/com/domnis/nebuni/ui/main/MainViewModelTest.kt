@@ -34,6 +34,9 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -55,6 +58,9 @@ class MainViewModelTest {
     /** Latitudes of the mission list requests, in the order they reached the HTTP engine. */
     private val requests = MutableStateFlow<List<String>>(emptyList())
     private val cancelled = MutableStateFlow<List<String>>(emptyList())
+
+    /** Decoded form fields of every mission list request, in the order they reached the HTTP engine. */
+    private val forms = MutableStateFlow<List<Map<String, String>>>(emptyList())
 
     @BeforeTest
     fun setUp() {
@@ -84,6 +90,9 @@ class MainViewModelTest {
             scienceAPI = ScienceAPI(HttpClient(MockEngine { request ->
                 val body = request.body.toByteArray().decodeToString()
                 val latitude = body.split("&").first { it.startsWith("lat=") }.removePrefix("lat=")
+                forms.update { it + body.split("&").associate { field ->
+                    field.substringBefore("=") to field.substringAfter("=")
+                } }
                 var index = 0
                 requests.update { list ->
                     index = list.count { it == latitude }
@@ -301,6 +310,58 @@ class MainViewModelTest {
         // the failed refresh keeps the cache
         assertEquals(listOf("mB"), viewModel.missionKeys())
     }
+
+    @Test
+    fun refreshMakesFourRequestsWithTheExpectedDayOffsets() = runTest {
+        val missionDao = FakeScienceMissionDao()
+        val viewModel = viewModel(placeRepository(FakeObservationPlaceDao(listOf(placeA))), missionDao) { _, _ ->
+            respond(oneMissionJson, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        requests.first { it.size == 4 }
+        viewModel.isLoadingMissionsSettled()
+        withContext(Dispatchers.Default) { while (missionDao.operations.size < 5) delay(10) }
+        advanceUntilIdle()
+
+        assertEquals(4, forms.value.size)
+        // the first request is made before the follow-ups, which run concurrently
+        val first = forms.value.first()
+        val baseDay = first.getValue("date").substringBefore("T")
+        assertEquals(daysFrom(baseDay, 2), first.getValue("tend").substringBefore("T"))
+        val chunks = forms.value.drop(1)
+        assertEquals(
+            listOf(3, 6, 9).map { daysFrom(baseDay, it) },
+            chunks.map { it.getValue("date").substringBefore("T") }.sorted()
+        )
+        assertEquals(
+            listOf(5, 8, 11).map { daysFrom(baseDay, it) },
+            chunks.map { it.getValue("tend").substringBefore("T") }.sorted()
+        )
+        // only the first call may clean the database: it clears the place once, before any insert
+        assertEquals(listOf("clearAll:a", "insertAll", "insertAll", "insertAll", "insertAll"), missionDao.operations)
+        assertFalse(viewModel.isLoadingMissions.value)
+    }
+
+    @Test
+    fun failedFirstRequestSkipsFollowUpsAndStopsLoading() = runTest {
+        val missionDao = FakeScienceMissionDao()
+        val viewModel = viewModel(placeRepository(FakeObservationPlaceDao(listOf(placeA))), missionDao) { _, _ ->
+            respond("", HttpStatusCode.ServiceUnavailable)
+        }
+        requests.first { it.isNotEmpty() }
+        viewModel.isLoadingMissionsSettled()
+        advanceUntilIdle()
+        // Follow-ups, if wrongly launched, are dispatched by advanceUntilIdle() but their requests
+        // reach the HTTP engine on its own threads: give them real time to be recorded.
+        withContext(Dispatchers.Default) { delay(500) }
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isLoadingMissions.value)
+        assertEquals(1, requests.value.size)
+        assertEquals(emptyList(), missionDao.operations)
+    }
+
+    private fun daysFrom(isoDate: String, days: Int) =
+        LocalDate.parse(isoDate).plus(days, DateTimeUnit.DAY).toString()
 
     private fun MainViewModel.missionKeys() = scienceMissionList.value.flatMap { it.missions }.map { it.missionKey }
 
