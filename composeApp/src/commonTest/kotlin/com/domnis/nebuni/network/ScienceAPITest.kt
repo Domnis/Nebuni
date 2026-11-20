@@ -88,7 +88,7 @@ class ScienceAPITest {
             }
         """.trimIndent()
 
-        val result = api(json(body)).listScienceMissions(place, "a", "b")
+        val result = api(json(body)).listScienceMissions(place, "a", "b").missions()
 
         val parsed = result.single()
         assertEquals(ScienceMissionType.PlanetaryDefense, parsed.getMissionType())
