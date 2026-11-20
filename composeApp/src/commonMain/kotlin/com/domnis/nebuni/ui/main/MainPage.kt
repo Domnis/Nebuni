@@ -168,18 +168,6 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                 },
                 actions = {
                     // Will be replaced by a settings button or something
-//                    if (isListAndDetailVisible || selectedMission == null) {
-//                        FilledIconButton(
-//                            onClick = {
-//                                mainViewModel.refreshScienceMissions()
-//                            },
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Filled.Refresh,
-//                                contentDescription = stringResource(Res.string.cd_refresh)
-//                            )
-//                        }
-//                    }
                 }
             )
         },
