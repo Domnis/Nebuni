@@ -54,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.domnis.nebuni.AppState
 import com.domnis.nebuni.data.ScienceMission
+import com.domnis.nebuni.ui.missions.label
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import nebuni.composeapp.generated.resources.Res
 import nebuni.composeapp.generated.resources.cd_info
@@ -167,7 +168,7 @@ fun ListPaneValidPage(
                 stickyHeader {
                     Text(
                         when {
-                            section.type != null -> stringResource(section.type.labelResource())
+                            section.type != null -> stringResource(section.type.label)
                             section.isToday -> stringResource(Res.string.section_today)
                             else -> section.date
                         },

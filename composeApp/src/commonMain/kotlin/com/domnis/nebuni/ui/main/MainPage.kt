@@ -81,6 +81,7 @@ import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.ui.missions.EmptyMissionPage
 import com.domnis.nebuni.ui.missions.MissionPage
+import com.domnis.nebuni.ui.missions.label
 import com.domnis.nebuni.ui.theme.fontStyle_header
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -533,7 +534,7 @@ fun ScienceMissionListItem(
             }
 
             Text(
-                stringResource(Res.string.mission_type_label, stringResource(mission.getMissionType().labelResource())),
+                stringResource(Res.string.mission_type_label, stringResource(mission.getMissionType().label)),
                 maxLines = 1
             )
 

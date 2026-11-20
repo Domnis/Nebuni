@@ -181,6 +181,23 @@ class ScienceMissionRepositoryTest {
         assertTrue(requests.isEmpty())
     }
 
+    @Test
+    fun getPlanetaryDefenseData_cacheMissCallsApiAndInsertsResult() = runTest {
+        val mission = ScienceMission(
+            missionKey = "m1",
+            observationPlaceID = place.id,
+            pipeline_type = "p",
+            ephemeris_args = ephemerisArgs
+        )
+
+        val result = repository().getPlanetaryDefenseData(mission)
+
+        assertEquals(1, result.size)
+        assertEquals(result, ephemerisDao.items)
+        assertEquals(1, requests.size)
+        assertTrue(requests.single().contains("is_comet=false"))
+    }
+
     private fun TestScope.routedRepository(
         missions: String,
         missionsStatus: HttpStatusCode = HttpStatusCode.OK,
