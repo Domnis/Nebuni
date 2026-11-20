@@ -203,6 +203,16 @@ class MainViewModel(
         }
     }
 
+    /** Persists the edited [place]; when it is the selected one, the selection flow then picks the change up. */
+    fun updatePlace(place: ObservationPlace) {
+        viewModelScope.launch {
+            observationPlaceRepository.update(place)
+        }
+    }
+
+    /** Whether a place can be deleted: the last place is always kept. */
+    fun canDeletePlace(): Boolean = places.value.size > 1
+
     /**
      * Deletes the place [id] with its cached data. When it is the selected place, the refresh in
      * flight is cancelled and awaited first so it cannot write rows back for the deleted place; the
@@ -210,7 +220,7 @@ class MainViewModel(
      * another place is left untouched. The last place is never deleted.
      */
     fun deletePlace(id: String) {
-        if (places.value.size <= 1) return
+        if (!canDeletePlace()) return
         val isSelected = id == appState.currentObservationPlace.value.id
         viewModelScope.launch {
             if (isSelected) {

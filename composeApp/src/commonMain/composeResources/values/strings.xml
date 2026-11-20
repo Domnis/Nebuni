@@ -66,6 +66,7 @@
     <string name="place_switcher_title">Observation places</string>
     <string name="place_switcher_change">Change observation place</string>
     <string name="place_switcher_add">Add an observation place</string>
+    <string name="place_switcher_edit">Edit %1$s</string>
     <string name="place_coordinates">%1$s, %2$s</string>
     <string name="place_lat_north">%1$s° N</string>
     <string name="place_lat_south">%1$s° S</string>
