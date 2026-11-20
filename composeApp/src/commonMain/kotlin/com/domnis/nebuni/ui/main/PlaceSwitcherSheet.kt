@@ -27,8 +27,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
@@ -50,6 +54,7 @@ import nebuni.composeapp.generated.resources.place_lat_south
 import nebuni.composeapp.generated.resources.place_lon_east
 import nebuni.composeapp.generated.resources.place_lon_west
 import nebuni.composeapp.generated.resources.place_switcher_add
+import nebuni.composeapp.generated.resources.place_switcher_edit
 import nebuni.composeapp.generated.resources.place_switcher_title
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
@@ -75,13 +80,17 @@ fun placeCoordinatesText(place: ObservationPlace): String {
     )
 }
 
-/** Lists the saved [places]; tapping one calls [onSelectPlace] with its id, the button calls [onAddPlace]. */
+/**
+ * Lists the saved [places]; tapping one calls [onSelectPlace] with its id, its edit button calls
+ * [onEditPlace] with its id, the bottom button calls [onAddPlace].
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaceSwitcherSheet(
     places: List<ObservationPlace>,
     selectedPlaceId: String,
     onSelectPlace: (String) -> Unit,
+    onEditPlace: (String) -> Unit,
     onAddPlace: () -> Unit,
     onDismissRequest: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -115,12 +124,19 @@ fun PlaceSwitcherSheet(
                         // the row handles the click, so the radio button stays a visual cue
                         RadioButton(selected = isSelected, onClick = null)
 
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(place.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(
                                 placeCoordinatesText(place),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        IconButton(onClick = { onEditPlace(place.id) }) {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = stringResource(Res.string.place_switcher_edit, place.name)
                             )
                         }
                     }

@@ -39,6 +39,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -61,6 +62,7 @@ import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaf
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -89,6 +91,7 @@ import nebuni.composeapp.generated.resources.cd_back
 import nebuni.composeapp.generated.resources.cd_location
 import nebuni.composeapp.generated.resources.e911_emergency
 import nebuni.composeapp.generated.resources.main_mission_start
+import nebuni.composeapp.generated.resources.main_refresh_failed_showing_saved
 import nebuni.composeapp.generated.resources.main_title
 import nebuni.composeapp.generated.resources.main_unknown_place
 import nebuni.composeapp.generated.resources.mission_priority_icon_description
@@ -111,9 +114,12 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
     val navigator = rememberListDetailPaneScaffoldNavigator<Nothing>()
 
     var isLoadingMissions by mainViewModel.isLoadingMissions
+    val lastRefreshFailed by mainViewModel.lastRefreshFailed
     var isListAndDetailVisible by remember { mutableStateOf(false) }
     var isPlaceSwitcherVisible by remember { mutableStateOf(false) }
     var isAddPlaceFormVisible by remember { mutableStateOf(false) }
+    // id of the place whose form is open in Edit mode, null when it is closed
+    var editedPlaceId by remember { mutableStateOf<String?>(null) }
 
     var scienceMissionList by mainViewModel.scienceMissionList
     var selectedMission by mainViewModel.selectedMission
@@ -169,18 +175,6 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                 },
                 actions = {
                     // Will be replaced by a settings button or something
-//                    if (isListAndDetailVisible || selectedMission == null) {
-//                        FilledIconButton(
-//                            onClick = {
-//                                mainViewModel.refreshScienceMissions()
-//                            },
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Filled.Refresh,
-//                                contentDescription = stringResource(Res.string.cd_refresh)
-//                            )
-//                        }
-//                    }
                 }
             )
         },
@@ -199,6 +193,10 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                     scope.launch { sheetState.hide() }.invokeOnCompletion {
                         if (!sheetState.isVisible) isPlaceSwitcherVisible = false
                     }
+                },
+                onEditPlace = { id ->
+                    isPlaceSwitcherVisible = false
+                    editedPlaceId = id
                 },
                 onAddPlace = {
                     isPlaceSwitcherVisible = false
@@ -220,6 +218,28 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                     isAddPlaceFormVisible = false
                 }
             )
+        }
+
+        // the form closes by itself if the edited place disappears
+        places.firstOrNull { it.id == editedPlaceId }?.let { editedPlace ->
+            // one form state per place, so its fields never show another place's values
+            key(editedPlace.id) {
+                ObservationPlaceFormDialog(
+                    initial = editedPlace,
+                    mode = ObservationPlaceFormMode.Edit,
+                    onDismissRequest = { editedPlaceId = null },
+                    onSubmit = { place ->
+                        mainViewModel.updatePlace(place)
+                        editedPlaceId = null
+                    },
+                    canDelete = mainViewModel.canDeletePlace(),
+                    onDelete = {
+                        // the form has already hidden its confirmation dialog; closing the form ends both
+                        mainViewModel.deletePlace(editedPlace.id)
+                        editedPlaceId = null
+                    }
+                )
+            }
         }
 
         ListDetailPaneScaffold(
@@ -252,6 +272,10 @@ fun MainPage(mainViewModel: MainViewModel = koinViewModel(), appState: AppState 
                                     startDateTime = startDateTime,
                                     endDateTime = endDateTime,
                                     currentObservationPlaceConfigurationState = currentObservationPlaceConfigurationState,
+                                    isShowingSavedMissionsAfterFailure = isShowingSavedMissionsAfterFailure(
+                                        lastRefreshFailed,
+                                        availableMissionTypes
+                                    ),
                                     onClick = { isPlaceSwitcherVisible = true }
                                 )
                             }
@@ -374,6 +398,7 @@ fun ListPaneHeaderCard(
     endDateTime: String,
     modifier: Modifier = Modifier,
     currentObservationPlaceConfigurationState: MainViewModel.ObservationPlaceConfigurationState = MainViewModel.ObservationPlaceConfigurationState.loading,
+    isShowingSavedMissionsAfterFailure: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     val isValid = currentObservationPlaceConfigurationState == MainViewModel.ObservationPlaceConfigurationState.valid
@@ -445,6 +470,28 @@ fun ListPaneHeaderCard(
 //                )
 //            )
 //        }
+
+        if (isValid && isShowingSavedMissionsAfterFailure) {
+            // non-blocking hint: the cached missions stay usable below
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    stringResource(Res.string.main_refresh_failed_showing_saved),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         HorizontalDivider()
     }

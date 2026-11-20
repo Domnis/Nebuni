@@ -81,12 +81,14 @@
     <string name="place_switcher_title">Lieux d’observation</string>
     <string name="place_switcher_change">Changer de lieu d’observation</string>
     <string name="place_switcher_add">Ajouter un lieu d’observation</string>
+    <string name="place_switcher_edit">Modifier %1$s</string>
     <string name="place_coordinates">%1$s, %2$s</string>
     <string name="place_lat_north">%1$s°&#160;N</string>
     <string name="place_lat_south">%1$s°&#160;S</string>
     <string name="place_lon_east">%1$s°&#160;E</string>
     <string name="place_lon_west">%1$s°&#160;O</string>
     <string name="main_no_mission_for_place">Aucune mission pour %1$s dans les prochains jours. Tirez vers le bas pour actualiser.</string>
+    <string name="main_refresh_failed_showing_saved">Impossible d'actualiser les missions. Affichage des missions enregistrées.</string>
     <string name="cd_back">Une icône de flèche de retour</string>
     <string name="cd_refresh">Une icône d’actualisation</string>
     <string name="cd_location">Une icône de localisation</string>

@@ -93,6 +93,15 @@ fun isPlaceWithoutMissions(
     isLoadingMissions: Boolean
 ): Boolean = !filter.isActive && availableTypes.isEmpty() && !isLoadingMissions
 
+/**
+ * True when the last refresh failed while the selected place has cached missions: the list header
+ * then tells that the saved missions are shown.
+ */
+fun isShowingSavedMissionsAfterFailure(
+    lastRefreshFailed: Boolean,
+    availableTypes: List<MissionTypeCount>
+): Boolean = lastRefreshFailed && availableTypes.isNotEmpty()
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ListPaneValidPage(

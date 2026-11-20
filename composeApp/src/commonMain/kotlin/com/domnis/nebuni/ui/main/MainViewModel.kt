@@ -29,6 +29,7 @@ import com.domnis.nebuni.data.ScienceMissionType
 import com.domnis.nebuni.getCurrentDate
 import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.getCurrentDateAndTimeWithOffset
+import com.domnis.nebuni.repository.MissionRefreshOutcome
 import com.domnis.nebuni.repository.ObservationPlaceRepository
 import com.domnis.nebuni.repository.ScienceMissionRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -59,6 +60,9 @@ class MainViewModel(
 
     var currentObservationPlaceConfigurationState = mutableStateOf(ObservationPlaceConfigurationState.loading)
     var isLoadingMissions = mutableStateOf(false)
+
+    /** True when the last refresh got no usable answer: the list then shows the saved missions. */
+    var lastRefreshFailed = mutableStateOf(false)
     var scienceMissionList = mutableStateOf<List<MissionSection>>(emptyList())
     var selectedMission = mutableStateOf<ScienceMission?>(null)
 
@@ -154,10 +158,11 @@ class MainViewModel(
     private fun refreshScienceMissions(place: ObservationPlace) {
         refreshJob?.cancel()
         isLoadingMissions.value = true
+        lastRefreshFailed.value = false
 
         refreshJob = viewModelScope.launch {
             // first call need to be sync to clean up database if needed
-            val isSucceed = withContext(refreshDispatcher) {
+            val outcome = withContext(refreshDispatcher) {
                 scienceMissionRepository.refreshScienceMissions(
                     place,
                     getCurrentDateAndTimeWithOffset(0),
@@ -168,8 +173,9 @@ class MainViewModel(
 
             //update UI to notify end of loading state
             isLoadingMissions.value = false
+            lastRefreshFailed.value = outcome is MissionRefreshOutcome.Failure
 
-            if (isSucceed) { // if first call is success, perform next calls
+            if (outcome is MissionRefreshOutcome.Success) { // if first call is success, perform next calls
                 // get next chunks of data 3 days by 3 days, as children of this job so they are
                 // cancelled with it
                 withContext(refreshDispatcher) {
@@ -203,6 +209,16 @@ class MainViewModel(
         }
     }
 
+    /** Persists the edited [place]; when it is the selected one, the selection flow then picks the change up. */
+    fun updatePlace(place: ObservationPlace) {
+        viewModelScope.launch {
+            observationPlaceRepository.update(place)
+        }
+    }
+
+    /** Whether a place can be deleted: the last place is always kept. */
+    fun canDeletePlace(): Boolean = places.value.size > 1
+
     /**
      * Deletes the place [id] with its cached data. When it is the selected place, the refresh in
      * flight is cancelled and awaited first so it cannot write rows back for the deleted place; the
@@ -210,7 +226,7 @@ class MainViewModel(
      * another place is left untouched. The last place is never deleted.
      */
     fun deletePlace(id: String) {
-        if (places.value.size <= 1) return
+        if (!canDeletePlace()) return
         val isSelected = id == appState.currentObservationPlace.value.id
         viewModelScope.launch {
             if (isSelected) {

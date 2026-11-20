@@ -26,6 +26,8 @@ import com.domnis.nebuni.database.EphemerisDataDao
 import com.domnis.nebuni.database.ScienceMissionDao
 import com.domnis.nebuni.getCurrentDateAndTime
 import com.domnis.nebuni.network.ScienceAPI
+import com.domnis.nebuni.network.ScienceApiFailure
+import com.domnis.nebuni.network.ScienceMissionsResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +37,18 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.ExperimentalTime
+
+/** Result of [ScienceMissionRepository.refreshScienceMissions]. */
+sealed interface MissionRefreshOutcome {
+    /** The server listed [missionCount] known missions, now stored. */
+    data class Success(val missionCount: Int) : MissionRefreshOutcome
+
+    /** The server answered with no known mission. */
+    data object Empty : MissionRefreshOutcome
+
+    /** No usable answer: the cached missions were left untouched. */
+    data class Failure(val reason: ScienceApiFailure) : MissionRefreshOutcome
+}
 
 class ScienceMissionRepository(
     private val scienceMissionDao: ScienceMissionDao,
@@ -52,18 +66,24 @@ class ScienceMissionRepository(
         startTime: String,
         endDate: String,
         canCleanDatabase: Boolean = false
-    ) : Boolean {
-        val apiResult = scienceAPI.listScienceMissions(
+    ) : MissionRefreshOutcome {
+        val response = scienceAPI.listScienceMissions(
             observationPlace = observationPlace,
             startDateTime = startTime,
             endDateTime = endDate
-        ).filter { it.getMissionType() != ScienceMissionType.Unknown }
+        )
+        val apiResult = when (response) {
+            // a failure keeps the cached missions untouched
+            is ScienceMissionsResult.Failure -> return MissionRefreshOutcome.Failure(response.reason)
+            is ScienceMissionsResult.Success -> response.missions
+        }.filter { it.getMissionType() != ScienceMissionType.Unknown }
+
+        if (canCleanDatabase) {
+            // the server answered: what it no longer lists is stale, even when it lists nothing
+            scienceMissionDao.clearAll(observationPlace.id)
+        }
 
         if (apiResult.isNotEmpty()) {
-            if (canCleanDatabase) {
-                scienceMissionDao.clearAll(observationPlace.id)
-            }
-
             scienceMissionDao.insertAll(apiResult)
 
             // clean up ephemeris data for mission which no longer exist
@@ -98,8 +118,8 @@ class ScienceMissionRepository(
             }
         }
 
-        // return true if API call is succeed
-        return apiResult.isNotEmpty()
+        return if (apiResult.isEmpty()) MissionRefreshOutcome.Empty
+        else MissionRefreshOutcome.Success(apiResult.size)
     }
 
     suspend fun getCometEphemerisData(

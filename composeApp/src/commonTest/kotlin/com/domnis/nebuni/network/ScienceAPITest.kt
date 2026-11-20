@@ -68,7 +68,7 @@ class ScienceAPITest {
         val result = api { request ->
             sentBody = request.body.toByteArray().decodeToString()
             respondJson(missionsJson)
-        }.listScienceMissions(place, "2025-01-01", "2025-01-02")
+        }.listScienceMissions(place, "2025-01-01", "2025-01-02").missions()
 
         assertEquals(listOf("m1", "m2"), result.map { it.missionKey })
         assertTrue(result.all { it.observationPlaceID == "place-1" })
@@ -118,30 +118,38 @@ class ScienceAPITest {
     }
 
     @Test
-    fun listScienceMissions_emptyObjectGivesEmptyList() = runTest {
-        assertEquals(emptyList(), api(json("{}")).listScienceMissions(place, "a", "b"))
+    fun listScienceMissions_emptyObjectGivesEmptySuccess() = runTest {
+        assertEquals(ScienceMissionsResult.Success(emptyList()), api(json("{}")).listScienceMissions(place, "a", "b"))
+        val onlyQuery = """{"query": {"foo": "bar"}}"""
+        assertEquals(ScienceMissionsResult.Success(emptyList()), api(json(onlyQuery)).listScienceMissions(place, "a", "b"))
     }
 
     @Test
-    fun listScienceMissions_httpErrorGivesEmptyList() = runTest {
+    fun listScienceMissions_httpErrorGivesNetworkFailure() = runTest {
         val result = api { respondError(HttpStatusCode.InternalServerError) }
             .listScienceMissions(place, "a", "b")
-        assertEquals(emptyList(), result)
+        assertEquals(ScienceMissionsResult.Failure(ScienceApiFailure.Network), result)
     }
 
     @Test
-    fun listScienceMissions_networkExceptionGivesEmptyList() = runTest {
+    fun listScienceMissions_networkExceptionGivesNetworkFailure() = runTest {
         val result = api { throw IllegalStateException("offline") }
             .listScienceMissions(place, "a", "b")
-        assertEquals(emptyList(), result)
+        assertEquals(ScienceMissionsResult.Failure(ScienceApiFailure.Network), result)
     }
 
     @Test
-    fun listScienceMissions_malformedBodyGivesEmptyList() = runTest {
-        for (body in malformedBodies) {
-            assertEquals(emptyList(), api(json(body)).listScienceMissions(place, "a", "b"), body)
+    fun listScienceMissions_malformedBodyGivesMalformedResponseFailure() = runTest {
+        for (body in malformedBodies + "") {
+            assertEquals(
+                ScienceMissionsResult.Failure(ScienceApiFailure.MalformedResponse),
+                api(json(body)).listScienceMissions(place, "a", "b"),
+                body
+            )
         }
     }
+
+    private fun ScienceMissionsResult.missions() = (this as ScienceMissionsResult.Success).missions
 
     @Test
     fun listScienceMissions_skipsNonObjectEntries() = runTest {
@@ -154,7 +162,7 @@ class ScienceAPITest {
               "m2": {"pipeline_type": "p", "target_name": "Asteroid"}
             }
         """.trimIndent()
-        val result = api(json(body)).listScienceMissions(place, "a", "b")
+        val result = api(json(body)).listScienceMissions(place, "a", "b").missions()
         assertEquals(listOf("m1", "m2"), result.map { it.missionKey })
     }
 

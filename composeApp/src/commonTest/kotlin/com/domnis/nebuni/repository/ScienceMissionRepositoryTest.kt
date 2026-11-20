@@ -5,6 +5,7 @@ import com.domnis.nebuni.data.EphemerisData
 import com.domnis.nebuni.data.ObservationPlace
 import com.domnis.nebuni.data.ScienceMission
 import com.domnis.nebuni.network.ScienceAPI
+import com.domnis.nebuni.network.ScienceApiFailure
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -18,7 +19,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
 
@@ -69,23 +69,79 @@ class ScienceMissionRepositoryTest {
     fun refreshScienceMissions_storesKnownMissionsThroughInjectedDao() = runTest {
         val repository = repository()
 
-        val succeeded = repository.refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+        val outcome = repository.refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
 
-        assertTrue(succeeded)
+        assertEquals(MissionRefreshOutcome.Success(2), outcome)
         val stored = repository.getScienceMissionFor(place).first()
         assertEquals(setOf("m1", "m2"), stored.map { it.missionKey }.toSet())
     }
 
     @Test
-    fun refreshScienceMissions_emptyApiResultKeepsDatabaseUntouched() = runTest {
+    fun refreshScienceMissions_emptyAnswerWithCanCleanDatabaseClearsCachedMissionsOfThePlace() = runTest {
+        missionDao.insert(ScienceMission(missionKey = "old", observationPlaceID = place.id, pipeline_type = "o"))
+        val other = ScienceMission(missionKey = "other", observationPlaceID = "place-2", pipeline_type = "o")
+        missionDao.insert(other)
+
+        val outcome = repository(missions = "{}")
+            .refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+
+        assertEquals(MissionRefreshOutcome.Empty, outcome)
+        assertEquals(listOf(other), missionDao.missions.value)
+    }
+
+    @Test
+    fun refreshScienceMissions_emptyAnswerWithoutCanCleanDatabaseKeepsCachedMissions() = runTest {
         val existing = ScienceMission(missionKey = "old", observationPlaceID = place.id, pipeline_type = "o")
         missionDao.insert(existing)
 
-        val succeeded = repository(missions = "{}")
-            .refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+        val outcome = repository(missions = "{}").refreshScienceMissions(place, "start", "end")
 
-        assertFalse(succeeded)
+        assertEquals(MissionRefreshOutcome.Empty, outcome)
         assertEquals(listOf(existing), missionDao.missions.value)
+    }
+
+    @Test
+    fun refreshScienceMissions_onlyUnknownMissionsIsEmpty() = runTest {
+        val json = """{"weird": ${missionJson("zzz", "WEIRD")}}"""
+
+        val outcome = routedRepository(json).refreshScienceMissions(place, "start", "end")
+
+        assertEquals(MissionRefreshOutcome.Empty, outcome)
+        assertTrue(missionDao.missions.value.isEmpty())
+    }
+
+    @Test
+    fun refreshScienceMissions_malformedBodyIsAFailureAndKeepsCachedMissions() = runTest {
+        val existing = ScienceMission(missionKey = "old", observationPlaceID = place.id, pipeline_type = "o")
+        missionDao.insert(existing)
+        missionDao.operations.clear()
+
+        for (body in listOf("<html>", "0", "")) {
+            val outcome = routedRepository(body).refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+
+            assertEquals(MissionRefreshOutcome.Failure(ScienceApiFailure.MalformedResponse), outcome, body)
+        }
+        assertEquals(listOf(existing), missionDao.missions.value)
+        assertTrue(missionDao.operations.isEmpty())
+    }
+
+    @Test
+    fun refreshScienceMissions_networkExceptionIsAFailureAndKeepsCachedMissions() = runTest {
+        val existing = ScienceMission(missionKey = "old", observationPlaceID = place.id, pipeline_type = "o")
+        missionDao.insert(existing)
+        missionDao.operations.clear()
+        val repository = ScienceMissionRepository(
+            scienceMissionDao = missionDao,
+            ephemerisDataDao = ephemerisDao,
+            scienceAPI = ScienceAPI(HttpClient(MockEngine { throw IllegalStateException("offline") })),
+            ioDispatcher = StandardTestDispatcher(testScheduler)
+        )
+
+        val outcome = repository.refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+
+        assertEquals(MissionRefreshOutcome.Failure(ScienceApiFailure.Network), outcome)
+        assertEquals(listOf(existing), missionDao.missions.value)
+        assertTrue(missionDao.operations.isEmpty())
     }
 
     @Test
@@ -176,9 +232,9 @@ class ScienceMissionRepositoryTest {
     fun refreshScienceMissions_malformedEphemerisDoesNotFailRefreshNorOtherMissions() = runTest {
         val repository = routedRepository(twoMissionsJson) { name -> if (name == "BAD") "<html>" else ephemerisJson }
 
-        val succeeded = repository.refreshScienceMissions(place, "start", "end")
+        val outcome = repository.refreshScienceMissions(place, "start", "end")
 
-        assertTrue(succeeded)
+        assertEquals(MissionRefreshOutcome.Success(2), outcome)
         assertEquals(setOf("good", "bad"), missionDao.missions.value.map { it.missionKey }.toSet())
         assertEquals(1, ephemerisDao.items.size)
         assertEquals(setOf("good"), ephemerisDao.items.map { it.missionKey }.toSet())
@@ -188,30 +244,34 @@ class ScienceMissionRepositoryTest {
     fun refreshScienceMissions_throwingEphemerisFetchDoesNotFailRefreshNorOtherMissions() = runTest {
         ephemerisDao.failingMissionKey = "bad"
 
-        val succeeded = routedRepository(twoMissionsJson).refreshScienceMissions(place, "start", "end")
+        val outcome = routedRepository(twoMissionsJson).refreshScienceMissions(place, "start", "end")
 
-        assertTrue(succeeded)
+        assertEquals(MissionRefreshOutcome.Success(2), outcome)
         assertEquals(setOf("good", "bad"), missionDao.missions.value.map { it.missionKey }.toSet())
         assertEquals(setOf("good"), ephemerisDao.items.map { it.missionKey }.toSet())
     }
 
     @Test
-    fun refreshScienceMissions_httpErrorReturnsFalseAndWritesNothing() = runTest {
-        val succeeded = routedRepository(twoMissionsJson, HttpStatusCode.InternalServerError)
+    fun refreshScienceMissions_httpErrorIsANetworkFailureAndKeepsCachedMissions() = runTest {
+        val existing = ScienceMission(missionKey = "old", observationPlaceID = place.id, pipeline_type = "o")
+        missionDao.insert(existing)
+        missionDao.operations.clear()
+
+        val outcome = routedRepository(twoMissionsJson, HttpStatusCode.InternalServerError)
             .refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
 
-        assertFalse(succeeded)
-        assertTrue(missionDao.missions.value.isEmpty())
+        assertEquals(MissionRefreshOutcome.Failure(ScienceApiFailure.Network), outcome)
+        assertEquals(listOf(existing), missionDao.missions.value)
         assertTrue(missionDao.operations.isEmpty())
         assertTrue(ephemerisDao.items.isEmpty())
     }
 
     @Test
-    fun refreshScienceMissions_emptyListWritesNothing() = runTest {
-        val succeeded = routedRepository("{}").refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
+    fun refreshScienceMissions_emptyAnswerOnlyClearsAndFetchesNoEphemeris() = runTest {
+        val outcome = routedRepository("{}").refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
 
-        assertFalse(succeeded)
-        assertTrue(missionDao.operations.isEmpty())
+        assertEquals(MissionRefreshOutcome.Empty, outcome)
+        assertEquals(listOf("clearAll:${place.id}"), missionDao.operations)
         assertTrue(ephemerisDao.items.isEmpty())
     }
 
@@ -222,10 +282,10 @@ class ScienceMissionRepositoryTest {
         missionDao.insert(other)
         missionDao.operations.clear()
 
-        val succeeded = routedRepository(twoMissionsJson)
+        val outcome = routedRepository(twoMissionsJson)
             .refreshScienceMissions(place, "start", "end", canCleanDatabase = true)
 
-        assertTrue(succeeded)
+        assertEquals(MissionRefreshOutcome.Success(2), outcome)
         assertEquals(listOf("clearAll:${place.id}", "insertAll"), missionDao.operations)
         val stored = missionDao.missions.value
         assertEquals(setOf("good", "bad", "other"), stored.map { it.missionKey }.toSet())
@@ -247,9 +307,9 @@ class ScienceMissionRepositoryTest {
     fun refreshScienceMissions_unknownPipelineTypeIsNotInserted() = runTest {
         val json = """{"good": ${missionJson("c", "GOOD")}, "weird": ${missionJson("zzz", "WEIRD")}}"""
 
-        val succeeded = routedRepository(json).refreshScienceMissions(place, "start", "end")
+        val outcome = routedRepository(json).refreshScienceMissions(place, "start", "end")
 
-        assertTrue(succeeded)
+        assertEquals(MissionRefreshOutcome.Success(1), outcome)
         assertEquals(listOf("good"), missionDao.missions.value.map { it.missionKey })
     }
 }
